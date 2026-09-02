@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard Notulen Rapat</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background: #f4f7fc;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 28px;
+      color: #1a3b5d;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    h1 small {
+      font-size: 16px;
+      font-weight: normal;
+      color: #5a7a9a;
+      margin-left: auto;
+    }
+
+    /* Filter & Pencarian */
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      background: white;
+      padding: 15px 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      margin-bottom: 30px;
+    }
+
+    .filters input,
+    .filters button {
+      padding: 10px 14px;
+      border: 1px solid #d0dbe6;
+      border-radius: 8px;
+      font-size: 14px;
+      background: white;
+    }
+
+    .filters input:focus {
+      border-color: #2a7de1;
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(42,125,225,0.15);
+    }
+
+    .filters button {
+      background: #2a7de1;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.2s;
+    }
+
+    .filters button:hover {
+      background: #1a5fb0;
+    }
+
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .filter-group label {
+      font-weight: 500;
+      color: #1a3b5d;
+    }
+
+    /* Grid kartu */
+    .notulen-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 24px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      transition: transform 0.15s, box-shadow 0.2s;
+      cursor: pointer;
+      border-left: 5px solid #2a7de1;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+    }
+
+    .card .title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #1a3b5d;
+      margin-bottom: 6px;
+    }
+
+    .card .meta {
+      display: flex;
+      justify-content: space-between;
+      color: #5a7a9a;
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+
+    .card .status {
+      background: #e9f0f9;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #1a3b5d;
+    }
+
+    .card .summary {
+      color: #3d5a78;
+      font-size: 14px;
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    /* Detail notulen (modal) */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.4);
+      backdrop-filter: blur(3px);
+      justify-content: center;
+      align-items: center;
+      z-index: 999;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal {
+      background: white;
+      max-width: 700px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+      position: relative;
+    }
+
+    .modal .close-btn {
+      position: absolute;
+      top: 16px;
+      right: 20px;
+      font-size: 28px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #7f9bb3;
+    }
+
+    .modal .close-btn:hover {
+      color: #1a3b5d;
+    }
+
+    .modal h2 {
+      font-size: 24px;
+      color: #1a3b5d;
+      margin-bottom: 4px;
+    }
+
+    .modal .sub {
+      color: #5a7a9a;
+      margin-bottom: 20px;
+      font-size: 14px;
+    }
+
+    .modal .detail-section {
+      margin-bottom: 18px;
+    }
+
+    .modal .detail-section h4 {
+      font-size: 16px;
+      color: #1a3b5d;
+      margin-bottom: 6px;
+      border-bottom: 1px solid #eef3f8;
+      padding-bottom: 4px;
+    }
+
+    .modal .detail-section p {
+      color: #2d4a6a;
+      line-height: 1.6;
+    }
+
+    .modal .tindak-lanjut {
+      background: #f4f9ff;
+      padding: 12px 16px;
+      border-radius: 10px;
+      margin-top: 6px;
+    }
+
+    .modal .tindak-lanjut li {
+      margin-left: 20px;
+      margin-bottom: 4px;
+    }
+
+    /* Responsif */
+    @media (max-width: 600px) {
+      .filters {
+        flex-direction: column;
+      }
+      .filter-group {
+        width: 100%;
+      }
+      .filter-group input {
+        flex: 1;
+      }
+      .modal {
+        padding: 20px;
+      }
+    }
+
+    .empty {
+      text-align: center;
+      color: #5a7a9a;
+      padding: 40px;
+      grid-column: 1 / -1;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <h1>
+    📋 Dashboard Notulen Rapat
+    <small>untuk seluruh staf</small>
+  </h1>
+
+  <!-- Filter -->
+  <div class="filters">
+    <div class="filter-group">
+      <label for="search">🔍 Cari</label>
+      <input type="text" id="search" placeholder="Judul atau pembahasan..." />
+    </div>
+    <div class="filter-group">
+      <label for="dateFrom">Dari</label>
+      <input type="date" id="dateFrom" />
+    </div>
+    <div class="filter-group">
+      <label for="dateTo">Sampai</label>
+      <input type="date" id="dateTo" />
+    </div>
+    <button id="resetBtn">↺ Reset</button>
+  </div>
+
+  <!-- Grid notulen -->
+  <div id="notulenGrid" class="notulen-grid"></div>
+</div>
+
+<!-- Modal detail -->
+<div id="modalDetail" class="modal-overlay">
+  <div class="modal">
+    <button class="close-btn" id="closeModal">&times;</button>
+    <h2 id="modalTitle">Judul Rapat</h2>
+    <div class="sub" id="modalMeta">Tanggal · Status</div>
+    <div class="detail-section">
+      <h4>📌 Agenda / Pembahasan</h4>
+      <p id="modalPembahasan">...</p>
+    </div>
+    <div class="detail-section">
+      <h4>✅ Keputusan</h4>
+      <p id="modalKeputusan">...</p>
+    </div>
+    <div class="detail-section">
+      <h4>📌 Tindak Lanjut</h4>
+      <div id="modalTindakLanjut" class="tindak-lanjut"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ---------- DATA DUMMY ----------
+  const notulenData = [
+    {
+      id: 1,
+      judul: 'Rapat Evaluasi Proyek Q1',
+      tanggal: '2026-01-15',
+      status: 'Selesai',
+      pembahasan: 'Membahas capaian target Q1, kendala teknis, dan solusi yang telah diimplementasikan.',
+      keputusan: 'Melanjutkan proyek dengan penambahan 2 developer. Anggaran disetujui.',
+      tindakLanjut: [
+        'Rekrutmen developer baru selesai 1 Feb',
+        'Update roadmap proyek',
+        'Rapat koordinasi mingguan setiap Senin'
+      ]
+    },
+    {
+      id: 2,
+      judul: 'Rapat Perencanaan Anggaran Tahunan',
+      tanggal: '2026-01-22',
+      status: 'Berjalan',
+      pembahasan: 'Diskusi alokasi anggaran untuk departemen IT, Marketing, dan Operasional.',
+      keputusan: 'Anggaran IT dinaikkan 15%, marketing tetap, operasional dikurangi 5%.',
+      tindakLanjut: [
+        'Tim finance menyusun detail anggaran',
+        'Presentasi ke direksi pada 30 Jan'
+      ]
+    },
+    {
+      id: 3,
+      judul: 'Rapat Koordinasi Tim Produk',
+      tanggal: '2026-02-03',
+      status: 'Selesai',
+      pembahasan: 'Pembahasan fitur baru untuk rilis Maret, prioritas backlogs, dan sprint planning.',
+      keputusan: 'Fitur A dan B menjadi prioritas. Sprint dimulai 5 Feb.',
+      tindakLanjut: [
+        'Update backlogs di Jira',
+        'Desain UI untuk fitur B selesai 10 Feb'
+      ]
+    },
+    {
+      id: 4,
+      judul: 'Rapat Review Kinerja Karyawan',
+      tanggal: '2026-02-10',
+      status: 'Direncanakan',
+      pembahasan: 'Menyusun format penilaian kinerja dan jadwal review untuk semua divisi.',
+      keputusan: 'Menggunakan format baru dengan 5 kriteria. Jadwal review 1-15 Maret.',
+      tindakLanjut: [
+        'Sosialisasi format ke seluruh kepala divisi',
+        'Buat template penilaian di system HR'
+      ]
+    },
+    {
+      id: 5,
+      judul: 'Rapat Keamanan Data dan Infrastruktur',
+      tanggal: '2026-02-17',
+      status: 'Berjalan',
+      pembahasan: 'Evaluasi kebijakan keamanan, update sertifikat, dan rencana migrasi cloud.',
+      keputusan: 'Migrasi ke cloud dilakukan bertahap mulai Maret. Peningkatan autentikasi dua faktor.',
+      tindakLanjut: [
+        'Audit keamanan oleh tim eksternal',
+        'Persiapan infrastruktur untuk migrasi'
+      ]
+    }
+  ];
+
+  // ---------- RENDER ----------
+  const grid = document.getElementById('notulenGrid');
+  const searchInput = document.getElementById('search');
+  const dateFrom = document.getElementById('dateFrom');
+  const dateTo = document.getElementById('dateTo');
+  const resetBtn = document.getElementById('resetBtn');
+
+  function renderNotulen(data) {
+    grid.innerHTML = '';
+    if (data.length === 0) {
+      grid.innerHTML = '<div class="empty">Tidak ada notulen yang ditemukan.</div>';
+      return;
+    }
+    data.forEach(item => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.dataset.id = item.id;
+      card.innerHTML = `
+        <div class="title">${item.judul}</div>
+        <div class="meta">
+          <span>${item.tanggal}</span>
+          <span class="status">${item.status}</span>
+        </div>
+        <div class="summary">${item.pembahasan}</div>
+      `;
+      card.addEventListener('click', () => openDetail(item.id));
+      grid.appendChild(card);
+    });
+  }
+
+  // ---------- FILTER ----------
+  function filterNotulen() {
+    const keyword = searchInput.value.toLowerCase().trim();
+    const from = dateFrom.value;
+    const to = dateTo.value;
+
+    const filtered = notulenData.filter(item => {
+      // Pencarian teks
+      if (keyword) {
+        const matchJudul = item.judul.toLowerCase().includes(keyword);
+        const matchPembahasan = item.pembahasan.toLowerCase().includes(keyword);
+        if (!matchJudul && !matchPembahasan) return false;
+      }
+      // Filter tanggal
+      if (from && item.tanggal < from) return false;
+      if (to && item.tanggal > to) return false;
+      return true;
+    });
+    renderNotulen(filtered);
+  }
+
+  // Event listener filter
+  searchInput.addEventListener('input', filterNotulen);
+  dateFrom.addEventListener('change', filterNotulen);
+  dateTo.addEventListener('change', filterNotulen);
+  resetBtn.addEventListener('click', () => {
+    searchInput.value = '';
+    dateFrom.value = '';
+    dateTo.value = '';
+    filterNotulen();
+  });
+
+  // ---------- DETAIL MODAL ----------
+  const modal = document.getElementById('modalDetail');
+  const modalTitle = document.getElementById('modalTitle');
+  const modalMeta = document.getElementById('modalMeta');
+  const modalPembahasan = document.getElementById('modalPembahasan');
+  const modalKeputusan = document.getElementById('modalKeputusan');
+  const modalTindakLanjut = document.getElementById('modalTindakLanjut');
+  const closeModalBtn = document.getElementById('closeModal');
+
+  function openDetail(id) {
+    const item = notulenData.find(d => d.id === id);
+    if (!item) return;
+
+    modalTitle.textContent = item.judul;
+    modalMeta.textContent = `${item.tanggal} · ${item.status}`;
+    modalPembahasan.textContent = item.pembahasan;
+    modalKeputusan.textContent = item.keputusan;
+
+    if (item.tindakLanjut && item.tindakLanjut.length > 0) {
+      const ul = document.createElement('ul');
+      item.tindakLanjut.forEach(t => {
+        const li = document.createElement('li');
+        li.textContent = t;
+        ul.appendChild(li);
+      });
+      modalTindakLanjut.innerHTML = '';
+      modalTindakLanjut.appendChild(ul);
+    } else {
+      modalTindakLanjut.innerHTML = '<p>Tidak ada tindak lanjut.</p>';
+    }
+
+    modal.classList.add('active');
+  }
+
+  function closeModal() {
+    modal.classList.remove('active');
+  }
+
+  closeModalBtn.addEventListener('click', closeModal);
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeModal();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeModal();
+  });
+
+  // ---------- INIT ----------
+  renderNotulen(notulenData);
+</script>
+</body>
+</html>
