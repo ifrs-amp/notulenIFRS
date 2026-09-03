@@ -74,7 +74,7 @@
       }
     }
 
-    /* ===== DASHBOARD (sama seperti sebelumnya) ===== */
+    /* ===== FILTER ===== */
     .filters {
       display: flex;
       flex-wrap: wrap;
@@ -126,9 +126,10 @@
       color: #1a3b5d;
     }
 
+    /* ===== GRID KARTU (lebih detail) ===== */
     .notulen-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
       gap: 24px;
     }
 
@@ -140,6 +141,9 @@
       transition: transform 0.15s, box-shadow 0.2s;
       cursor: pointer;
       border-left: 5px solid #2a7de1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
     }
 
     .card:hover {
@@ -151,7 +155,7 @@
       font-size: 18px;
       font-weight: 600;
       color: #1a3b5d;
-      margin-bottom: 6px;
+      margin-bottom: 2px;
     }
 
     .card .meta {
@@ -159,29 +163,52 @@
       justify-content: space-between;
       color: #5a7a9a;
       font-size: 14px;
-      margin-bottom: 12px;
+      border-bottom: 1px solid #eef3f8;
+      padding-bottom: 8px;
+      margin-bottom: 6px;
     }
 
     .card .status {
       background: #e9f0f9;
-      padding: 4px 12px;
+      padding: 2px 12px;
       border-radius: 20px;
       font-size: 12px;
       font-weight: 600;
       color: #1a3b5d;
     }
 
-    .card .summary {
-      color: #3d5a78;
+    .card .field {
       font-size: 14px;
+      color: #2d4a6a;
       line-height: 1.5;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
     }
 
-    /* ===== MODAL DETAIL ===== */
+    .card .field strong {
+      color: #1a3b5d;
+      font-weight: 600;
+      display: inline-block;
+      min-width: 80px;
+    }
+
+    .card .field .value {
+      display: inline;
+    }
+
+    .card .tindak-lanjut-list {
+      padding-left: 20px;
+      margin: 4px 0;
+    }
+
+    .card .tindak-lanjut-list li {
+      margin-bottom: 2px;
+    }
+
+    .card .empty-field {
+      color: #9bb0c4;
+      font-style: italic;
+    }
+
+    /* ===== MODAL DETAIL (tetap dipertahankan) ===== */
     .modal-overlay {
       display: none;
       position: fixed;
@@ -275,7 +302,7 @@
       grid-column: 1 / -1;
     }
 
-    /* ===== ADMIN PANEL ===== */
+    /* ===== ADMIN PANEL (tidak berubah) ===== */
     .admin-container {
       display: grid;
       grid-template-columns: 1fr 1.5fr;
@@ -288,7 +315,6 @@
       }
     }
 
-    /* Form Admin */
     .admin-form {
       background: white;
       padding: 24px;
@@ -395,7 +421,6 @@
       background: #d68910;
     }
 
-    /* Daftar notulen di admin */
     .admin-list {
       background: white;
       padding: 20px;
@@ -518,6 +543,9 @@
         width: 100%;
         justify-content: flex-end;
       }
+      .notulen-grid {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
@@ -634,7 +662,7 @@
   // ============================================================
   const STORAGE_KEY = 'notulenData';
 
-  // Data default jika localStorage kosong
+  // Data default (termasuk contoh dari gambar)
   const defaultData = [
     {
       id: 1,
@@ -680,6 +708,16 @@
       pembahasan: 'Evaluasi kebijakan keamanan, update sertifikat, dan rencana migrasi cloud.',
       keputusan: 'Migrasi ke cloud dilakukan bertahap mulai Maret. Peningkatan autentikasi dua faktor.',
       tindakLanjut: ['Audit keamanan oleh tim eksternal', 'Persiapan infrastruktur untuk migrasi']
+    },
+    // Tambahan contoh sesuai file gambar
+    {
+      id: 6,
+      judul: 'Rapat Koordinasi Bulan Agustus 2026 (Depo Terpadu)',
+      tanggal: '2026-08-24',
+      status: 'Berjalan',
+      pembahasan: '1. keranjang yang agak besar, blender\n2. jadwal anak orientasi di putar atau tidak',
+      keputusan: 'Belum ada keputusan final, akan dibahas lebih lanjut.',
+      tindakLanjut: ['Koordinasi dengan tim logistik', 'Cek ketersediaan blender besar']
     }
   ];
 
@@ -692,7 +730,6 @@
         return defaultData;
       }
     } else {
-      // Simpan default ke localStorage
       localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultData));
       return defaultData;
     }
@@ -703,7 +740,7 @@
   }
 
   // ============================================================
-  //  RENDER DASHBOARD
+  //  RENDER DASHBOARD (dengan tampilan lengkap)
   // ============================================================
   const grid = document.getElementById('notulenGrid');
   const searchInput = document.getElementById('search');
@@ -717,18 +754,49 @@
       grid.innerHTML = '<div class="empty">Tidak ada notulen yang ditemukan.</div>';
       return;
     }
+
     data.forEach(item => {
       const card = document.createElement('div');
       card.className = 'card';
       card.dataset.id = item.id;
+
+      // Buat daftar tindak lanjut jika ada
+      let tlHtml = '';
+      if (item.tindakLanjut && item.tindakLanjut.length > 0) {
+        tlHtml = '<ul class="tindak-lanjut-list">';
+        item.tindakLanjut.forEach(t => {
+          tlHtml += `<li>${t}</li>`;
+        });
+        tlHtml += '</ul>';
+      } else {
+        tlHtml = '<span class="empty-field">Tidak ada tindak lanjut</span>';
+      }
+
+      // Ganti newline dengan <br> untuk pembahasan & keputusan
+      const pembahasanFormatted = (item.pembahasan || '').replace(/\n/g, '<br>');
+      const keputusanFormatted = (item.keputusan || '').replace(/\n/g, '<br>');
+
       card.innerHTML = `
         <div class="title">${item.judul}</div>
         <div class="meta">
           <span>${item.tanggal}</span>
           <span class="status">${item.status}</span>
         </div>
-        <div class="summary">${item.pembahasan}</div>
+        <div class="field">
+          <strong>📌 Pembahasan</strong>
+          <div class="value">${pembahasanFormatted || '<span class="empty-field">-</span>'}</div>
+        </div>
+        <div class="field">
+          <strong>✅ Keputusan</strong>
+          <div class="value">${keputusanFormatted || '<span class="empty-field">-</span>'}</div>
+        </div>
+        <div class="field">
+          <strong>📌 Tindak Lanjut</strong>
+          <div class="value">${tlHtml}</div>
+        </div>
       `;
+
+      // Klik kartu untuk membuka modal detail (tetap)
       card.addEventListener('click', () => openDetail(item.id));
       grid.appendChild(card);
     });
@@ -743,7 +811,7 @@
     const filtered = allData.filter(item => {
       if (keyword) {
         const matchJudul = item.judul.toLowerCase().includes(keyword);
-        const matchPembahasan = item.pembahasan.toLowerCase().includes(keyword);
+        const matchPembahasan = (item.pembahasan || '').toLowerCase().includes(keyword);
         if (!matchJudul && !matchPembahasan) return false;
       }
       if (from && item.tanggal < from) return false;
@@ -764,7 +832,7 @@
   });
 
   // ============================================================
-  //  MODAL DETAIL
+  //  MODAL DETAIL (sama)
   // ============================================================
   const modal = document.getElementById('modalDetail');
   const modalTitle = document.getElementById('modalTitle');
@@ -812,7 +880,7 @@
   });
 
   // ============================================================
-  //  ADMIN PANEL
+  //  ADMIN PANEL (tidak berubah)
   // ============================================================
   let editingId = null;
 
@@ -852,7 +920,6 @@
     });
     adminListContainer.innerHTML = html;
 
-    // Event listener edit & delete
     document.querySelectorAll('.edit-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -878,7 +945,6 @@
     submitBtn.textContent = 'Simpan Notulen';
     formTitle.textContent = '✏️ Tambah Notulen Baru';
     cancelEditBtn.style.display = 'none';
-    // default tanggal hari ini
     const today = new Date().toISOString().split('T')[0];
     if (!f_tanggal.value) f_tanggal.value = today;
   }
@@ -906,10 +972,9 @@
     data = data.filter(d => d.id !== id);
     saveData(data);
     renderAdminList();
-    filterNotulen(); // refresh dashboard
+    filterNotulen();
   }
 
-  // Submit form (Tambah / Update)
   adminForm.addEventListener('submit', (e) => {
     e.preventDefault();
 
@@ -929,7 +994,6 @@
     let data = loadData();
 
     if (editingId !== null) {
-      // UPDATE
       const index = data.findIndex(d => d.id === editingId);
       if (index !== -1) {
         data[index] = {
@@ -943,7 +1007,6 @@
         };
       }
     } else {
-      // ADD NEW
       const newId = data.length > 0 ? Math.max(...data.map(d => d.id)) + 1 : 1;
       data.push({
         id: newId,
@@ -959,7 +1022,7 @@
     saveData(data);
     resetForm();
     renderAdminList();
-    filterNotulen(); // refresh dashboard
+    filterNotulen();
     alert(editingId !== null ? 'Notulen berhasil diupdate!' : 'Notulen berhasil ditambahkan!');
     editingId = null;
   });
@@ -985,7 +1048,6 @@
         tabContents[key].classList.toggle('active', key === tab);
       });
 
-      // Refresh admin list setiap kali tab admin dibuka
       if (tab === 'admin') {
         renderAdminList();
         resetForm();
@@ -999,11 +1061,9 @@
   // ============================================================
   //  INIT
   // ============================================================
-  // Set default tanggal di form ke hari ini
   const today = new Date().toISOString().split('T')[0];
   f_tanggal.value = today;
 
-  // Render awal
   filterNotulen();
   renderAdminList();
 </script>
