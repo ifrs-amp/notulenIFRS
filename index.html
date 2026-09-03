@@ -5,591 +5,91 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dashboard & Admin Notulen Rapat</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-
-    body {
-      background: #f4f7fc;
-      padding: 20px;
-    }
-
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-
-    /* ===== NAV TAB ===== */
-    .tab-nav {
-      display: flex;
-      gap: 12px;
-      margin-bottom: 25px;
-      border-bottom: 2px solid #dce5ef;
-      padding-bottom: 8px;
-    }
-
-    .tab-nav button {
-      padding: 10px 24px;
-      border: none;
-      background: transparent;
-      font-size: 16px;
-      font-weight: 600;
-      color: #5a7a9a;
-      cursor: pointer;
-      border-radius: 8px 8px 0 0;
-      transition: 0.2s;
-    }
-
-    .tab-nav button:hover {
-      background: #e9f0f9;
-      color: #1a3b5d;
-    }
-
-    .tab-nav button.active {
-      background: #2a7de1;
-      color: white;
-      box-shadow: 0 -2px 6px rgba(42, 125, 225, 0.15);
-    }
-
-    .tab-content {
-      display: none;
-      animation: fade 0.25s ease;
-    }
-
-    .tab-content.active {
-      display: block;
-    }
-
-    @keyframes fade {
-      from {
-        opacity: 0.4;
-        transform: translateY(6px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    /* ===== FILTER ===== */
-    .filters {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 15px;
-      background: white;
-      padding: 15px 20px;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-      margin-bottom: 30px;
-    }
-
-    .filters input,
-    .filters button {
-      padding: 10px 14px;
-      border: 1px solid #d0dbe6;
-      border-radius: 8px;
-      font-size: 14px;
-      background: white;
-    }
-
-    .filters input:focus {
-      border-color: #2a7de1;
-      outline: none;
-      box-shadow: 0 0 0 3px rgba(42, 125, 225, 0.15);
-    }
-
-    .filters button {
-      background: #2a7de1;
-      color: white;
-      border: none;
-      cursor: pointer;
-      font-weight: 600;
-      transition: background 0.2s;
-    }
-
-    .filters button:hover {
-      background: #1a5fb0;
-    }
-
-    .filter-group {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .filter-group label {
-      font-weight: 500;
-      color: #1a3b5d;
-    }
-
-    /* ===== GRID KARTU ===== */
-    .notulen-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-      gap: 24px;
-    }
-
-    .card {
-      background: white;
-      border-radius: 16px;
-      padding: 20px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-      transition: transform 0.15s, box-shadow 0.2s;
-      cursor: pointer;
-      border-left: 5px solid #2a7de1;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
-    }
-
-    .card .title {
-      font-size: 18px;
-      font-weight: 600;
-      color: #1a3b5d;
-      margin-bottom: 2px;
-    }
-
-    .card .meta {
-      display: flex;
-      justify-content: space-between;
-      color: #5a7a9a;
-      font-size: 14px;
-      border-bottom: 1px solid #eef3f8;
-      padding-bottom: 8px;
-      margin-bottom: 6px;
-      align-items: center;
-    }
-
-    /* ===== DROPDOWN STATUS (seperti badge) ===== */
-    .status-dropdown {
-      padding: 2px 8px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 600;
-      border: none;
-      outline: none;
-      cursor: pointer;
-      background: #e9f0f9;
-      color: #1a3b5d;
-      transition: background 0.2s;
-      font-family: inherit;
-      appearance: auto;
-      -webkit-appearance: auto;
-      min-width: 80px;
-      text-align: center;
-    }
-
-    .status-dropdown.status-berjalan {
-      background: #e9f0f9;
-      color: #1a3b5d;
-    }
-
-    .status-dropdown.status-selesai {
-      background: #c8e6c9;
-      color: #2e7d32;
-    }
-
-    .status-dropdown.status-batal {
-      background: #f8d7da;
-      color: #a71d2a;
-    }
-
-    .status-dropdown:hover {
-      filter: brightness(0.95);
-    }
-
-    .card .field {
-      font-size: 14px;
-      color: #2d4a6a;
-      line-height: 1.5;
-    }
-
-    .card .field strong {
-      color: #1a3b5d;
-      font-weight: 600;
-      display: block;
-      margin-bottom: 2px;
-    }
-
-    .card .field ul {
-      padding-left: 20px;
-      margin: 4px 0;
-    }
-
-    .card .field ul li {
-      margin-bottom: 2px;
-    }
-
-    .card .empty-field {
-      color: #9bb0c4;
-      font-style: italic;
-    }
-
-    /* ===== MODAL DETAIL ===== */
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.4);
-      backdrop-filter: blur(3px);
-      justify-content: center;
-      align-items: center;
-      z-index: 999;
-    }
-
-    .modal-overlay.active {
-      display: flex;
-    }
-
-    .modal {
-      background: white;
-      max-width: 700px;
-      width: 90%;
-      max-height: 90vh;
-      overflow-y: auto;
-      border-radius: 20px;
-      padding: 30px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
-      position: relative;
-    }
-
-    .modal .close-btn {
-      position: absolute;
-      top: 16px;
-      right: 20px;
-      font-size: 28px;
-      background: none;
-      border: none;
-      cursor: pointer;
-      color: #7f9bb3;
-    }
-
-    .modal .close-btn:hover {
-      color: #1a3b5d;
-    }
-
-    .modal h2 {
-      font-size: 24px;
-      color: #1a3b5d;
-      margin-bottom: 4px;
-    }
-
-    .modal .sub {
-      color: #5a7a9a;
-      margin-bottom: 20px;
-      font-size: 14px;
-    }
-
-    .modal .detail-section {
-      margin-bottom: 18px;
-    }
-
-    .modal .detail-section h4 {
-      font-size: 16px;
-      color: #1a3b5d;
-      margin-bottom: 6px;
-      border-bottom: 1px solid #eef3f8;
-      padding-bottom: 4px;
-    }
-
-    .modal .detail-section ul {
-      padding-left: 20px;
-      margin: 6px 0;
-    }
-
-    .modal .detail-section ul li {
-      margin-bottom: 4px;
-    }
-
-    .modal .detail-section p {
-      color: #2d4a6a;
-      line-height: 1.6;
-    }
-
-    .modal .tindak-lanjut {
-      background: #f4f9ff;
-      padding: 12px 16px;
-      border-radius: 10px;
-      margin-top: 6px;
-    }
-
-    .modal .tindak-lanjut ul {
-      padding-left: 20px;
-    }
-
-    .modal .tindak-lanjut li {
-      margin-bottom: 4px;
-    }
-
-    .empty {
-      text-align: center;
-      color: #5a7a9a;
-      padding: 40px;
-      grid-column: 1 / -1;
-    }
-
-    /* ===== ADMIN PANEL ===== */
-    .admin-container {
-      display: grid;
-      grid-template-columns: 1fr 1.5fr;
-      gap: 30px;
-    }
-
-    @media (max-width: 850px) {
-      .admin-container {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    .admin-form {
-      background: white;
-      padding: 24px;
-      border-radius: 16px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
-    }
-
-    .admin-form h3 {
-      font-size: 20px;
-      color: #1a3b5d;
-      margin-bottom: 18px;
-      border-bottom: 2px solid #eef3f8;
-      padding-bottom: 10px;
-    }
-
-    .form-group {
-      margin-bottom: 16px;
-    }
-
-    .form-group label {
-      display: block;
-      font-weight: 600;
-      color: #1a3b5d;
-      margin-bottom: 4px;
-      font-size: 14px;
-    }
-
-    .form-group input,
-    .form-group select,
-    .form-group textarea {
-      width: 100%;
-      padding: 10px 12px;
-      border: 1px solid #d0dbe6;
-      border-radius: 8px;
-      font-size: 14px;
-      transition: 0.2s;
-      background: #fafcfd;
-    }
-
-    .form-group input:focus,
-    .form-group select:focus,
-    .form-group textarea:focus {
-      border-color: #2a7de1;
-      outline: none;
-      box-shadow: 0 0 0 3px rgba(42, 125, 225, 0.1);
-      background: white;
-    }
-
-    .form-group textarea {
-      min-height: 60px;
-      resize: vertical;
-    }
-
-    .form-actions {
-      display: flex;
-      gap: 12px;
-      margin-top: 8px;
-      flex-wrap: wrap;
-    }
-
-    .form-actions button {
-      padding: 10px 24px;
-      border: none;
-      border-radius: 8px;
-      font-weight: 600;
-      font-size: 14px;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-
-    .btn-primary {
-      background: #2a7de1;
-      color: white;
-    }
-
-    .btn-primary:hover {
-      background: #1a5fb0;
-    }
-
-    .btn-secondary {
-      background: #e9f0f9;
-      color: #1a3b5d;
-    }
-
-    .btn-secondary:hover {
-      background: #d0dbe6;
-    }
-
-    .btn-danger {
-      background: #e34f4f;
-      color: white;
-    }
-
-    .btn-danger:hover {
-      background: #c0392b;
-    }
-
-    .btn-warning {
-      background: #f39c12;
-      color: white;
-    }
-
-    .btn-warning:hover {
-      background: #d68910;
-    }
-
-    .admin-list {
-      background: white;
-      padding: 20px;
-      border-radius: 16px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
-      max-height: 600px;
-      overflow-y: auto;
-    }
-
-    .admin-list h3 {
-      font-size: 20px;
-      color: #1a3b5d;
-      margin-bottom: 18px;
-      border-bottom: 2px solid #eef3f8;
-      padding-bottom: 10px;
-    }
-
-    .admin-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px 14px;
-      border-radius: 10px;
-      background: #f8fafd;
-      margin-bottom: 10px;
-      border-left: 4px solid #2a7de1;
-      transition: 0.15s;
-    }
-
-    .admin-item:hover {
-      background: #eef4fa;
-    }
-
-    .admin-item .info {
-      flex: 1;
-    }
-
-    .admin-item .info .judul {
-      font-weight: 600;
-      color: #1a3b5d;
-    }
-
-    .admin-item .info .tanggal {
-      font-size: 13px;
-      color: #5a7a9a;
-      margin-left: 12px;
-    }
-
-    .admin-item .info .status-badge {
-      font-size: 12px;
-      background: #dce5ef;
-      padding: 2px 10px;
-      border-radius: 20px;
-      margin-left: 10px;
-    }
-
-    .admin-item .actions {
-      display: flex;
-      gap: 8px;
-    }
-
-    .admin-item .actions button {
-      border: none;
-      background: transparent;
-      padding: 6px 12px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 13px;
-      transition: 0.15s;
-    }
-
-    .admin-item .actions .edit-btn {
-      color: #2a7de1;
-      background: #e3edfa;
-    }
-
-    .admin-item .actions .edit-btn:hover {
-      background: #c7dbf5;
-    }
-
-    .admin-item .actions .delete-btn {
-      color: #c0392b;
-      background: #fde8e8;
-    }
-
-    .admin-item .actions .delete-btn:hover {
-      background: #f8d0d0;
-    }
-
-    .admin-empty {
-      text-align: center;
-      color: #5a7a9a;
-      padding: 30px 0;
-    }
-
-    /* ===== RESPONSIVE ===== */
-    @media (max-width: 600px) {
-      .filters {
-        flex-direction: column;
-      }
-      .filter-group {
-        width: 100%;
-      }
-      .filter-group input {
-        flex: 1;
-      }
-      .modal {
-        padding: 20px;
-      }
-      .tab-nav button {
-        padding: 8px 16px;
-        font-size: 14px;
-      }
-      .admin-item {
-        flex-wrap: wrap;
-        gap: 10px;
-      }
-      .admin-item .actions {
-        width: 100%;
-        justify-content: flex-end;
-      }
-      .notulen-grid {
-        grid-template-columns: 1fr;
-      }
-      .status-dropdown {
-        min-width: 70px;
-        font-size: 11px;
-        padding: 2px 6px;
-      }
-    }
+    /* ===== STYLE SAMA SEPERTI SEBELUMNYA (salin dari jawaban sebelumnya) ===== */
+    /* Saya tulis ulang sebagian agar lebih ringkas, tapi tetap lengkap */
+    * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; }
+    body { background:#f4f7fc; padding:20px; }
+    .container { max-width:1200px; margin:0 auto; }
+    .tab-nav { display:flex; gap:12px; margin-bottom:25px; border-bottom:2px solid #dce5ef; padding-bottom:8px; }
+    .tab-nav button { padding:10px 24px; border:none; background:transparent; font-size:16px; font-weight:600; color:#5a7a9a; cursor:pointer; border-radius:8px 8px 0 0; transition:0.2s; }
+    .tab-nav button:hover { background:#e9f0f9; color:#1a3b5d; }
+    .tab-nav button.active { background:#2a7de1; color:white; box-shadow:0 -2px 6px rgba(42,125,225,0.15); }
+    .tab-content { display:none; animation:fade 0.25s ease; }
+    .tab-content.active { display:block; }
+    @keyframes fade { from { opacity:0.4; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+    .filters { display:flex; flex-wrap:wrap; gap:15px; background:white; padding:15px 20px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.06); margin-bottom:30px; }
+    .filters input, .filters button { padding:10px 14px; border:1px solid #d0dbe6; border-radius:8px; font-size:14px; background:white; }
+    .filters input:focus { border-color:#2a7de1; outline:none; box-shadow:0 0 0 3px rgba(42,125,225,0.15); }
+    .filters button { background:#2a7de1; color:white; border:none; cursor:pointer; font-weight:600; transition:background 0.2s; }
+    .filters button:hover { background:#1a5fb0; }
+    .filter-group { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .filter-group label { font-weight:500; color:#1a3b5d; }
+    .notulen-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:24px; }
+    .card { background:white; border-radius:16px; padding:20px; box-shadow:0 4px 12px rgba(0,0,0,0.05); transition:transform 0.15s, box-shadow 0.2s; cursor:pointer; border-left:5px solid #2a7de1; display:flex; flex-direction:column; gap:8px; }
+    .card:hover { transform:translateY(-4px); box-shadow:0 8px 20px rgba(0,0,0,0.08); }
+    .card .title { font-size:18px; font-weight:600; color:#1a3b5d; margin-bottom:2px; }
+    .card .meta { display:flex; justify-content:space-between; color:#5a7a9a; font-size:14px; border-bottom:1px solid #eef3f8; padding-bottom:8px; margin-bottom:6px; align-items:center; }
+    .status-dropdown { padding:2px 8px; border-radius:20px; font-size:12px; font-weight:600; border:none; outline:none; cursor:pointer; background:#e9f0f9; color:#1a3b5d; transition:background 0.2s; font-family:inherit; appearance:auto; -webkit-appearance:auto; min-width:80px; text-align:center; }
+    .status-dropdown.status-berjalan { background:#e9f0f9; color:#1a3b5d; }
+    .status-dropdown.status-selesai { background:#c8e6c9; color:#2e7d32; }
+    .status-dropdown.status-batal { background:#f8d7da; color:#a71d2a; }
+    .status-dropdown:hover { filter:brightness(0.95); }
+    .card .field { font-size:14px; color:#2d4a6a; line-height:1.5; }
+    .card .field strong { color:#1a3b5d; font-weight:600; display:block; margin-bottom:2px; }
+    .card .field ul { padding-left:20px; margin:4px 0; }
+    .card .field ul li { margin-bottom:2px; }
+    .card .empty-field { color:#9bb0c4; font-style:italic; }
+    .modal-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.4); backdrop-filter:blur(3px); justify-content:center; align-items:center; z-index:999; }
+    .modal-overlay.active { display:flex; }
+    .modal { background:white; max-width:700px; width:90%; max-height:90vh; overflow-y:auto; border-radius:20px; padding:30px; box-shadow:0 20px 60px rgba(0,0,0,0.2); position:relative; }
+    .modal .close-btn { position:absolute; top:16px; right:20px; font-size:28px; background:none; border:none; cursor:pointer; color:#7f9bb3; }
+    .modal .close-btn:hover { color:#1a3b5d; }
+    .modal h2 { font-size:24px; color:#1a3b5d; margin-bottom:4px; }
+    .modal .sub { color:#5a7a9a; margin-bottom:20px; font-size:14px; }
+    .modal .detail-section { margin-bottom:18px; }
+    .modal .detail-section h4 { font-size:16px; color:#1a3b5d; margin-bottom:6px; border-bottom:1px solid #eef3f8; padding-bottom:4px; }
+    .modal .detail-section ul { padding-left:20px; margin:6px 0; }
+    .modal .detail-section ul li { margin-bottom:4px; }
+    .modal .detail-section p { color:#2d4a6a; line-height:1.6; }
+    .modal .tindak-lanjut { background:#f4f9ff; padding:12px 16px; border-radius:10px; margin-top:6px; }
+    .modal .tindak-lanjut ul { padding-left:20px; }
+    .modal .tindak-lanjut li { margin-bottom:4px; }
+    .empty { text-align:center; color:#5a7a9a; padding:40px; grid-column:1/-1; }
+    .admin-container { display:grid; grid-template-columns:1fr 1.5fr; gap:30px; }
+    @media (max-width:850px) { .admin-container { grid-template-columns:1fr; } }
+    .admin-form { background:white; padding:24px; border-radius:16px; box-shadow:0 2px 10px rgba(0,0,0,0.04); }
+    .admin-form h3 { font-size:20px; color:#1a3b5d; margin-bottom:18px; border-bottom:2px solid #eef3f8; padding-bottom:10px; }
+    .form-group { margin-bottom:16px; }
+    .form-group label { display:block; font-weight:600; color:#1a3b5d; margin-bottom:4px; font-size:14px; }
+    .form-group input, .form-group select, .form-group textarea { width:100%; padding:10px 12px; border:1px solid #d0dbe6; border-radius:8px; font-size:14px; transition:0.2s; background:#fafcfd; }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color:#2a7de1; outline:none; box-shadow:0 0 0 3px rgba(42,125,225,0.1); background:white; }
+    .form-group textarea { min-height:60px; resize:vertical; }
+    .form-actions { display:flex; gap:12px; margin-top:8px; flex-wrap:wrap; }
+    .form-actions button { padding:10px 24px; border:none; border-radius:8px; font-weight:600; font-size:14px; cursor:pointer; transition:0.2s; }
+    .btn-primary { background:#2a7de1; color:white; }
+    .btn-primary:hover { background:#1a5fb0; }
+    .btn-secondary { background:#e9f0f9; color:#1a3b5d; }
+    .btn-secondary:hover { background:#d0dbe6; }
+    .btn-danger { background:#e34f4f; color:white; }
+    .btn-danger:hover { background:#c0392b; }
+    .btn-warning { background:#f39c12; color:white; }
+    .btn-warning:hover { background:#d68910; }
+    .admin-list { background:white; padding:20px; border-radius:16px; box-shadow:0 2px 10px rgba(0,0,0,0.04); max-height:600px; overflow-y:auto; }
+    .admin-list h3 { font-size:20px; color:#1a3b5d; margin-bottom:18px; border-bottom:2px solid #eef3f8; padding-bottom:10px; }
+    .admin-item { display:flex; justify-content:space-between; align-items:center; padding:12px 14px; border-radius:10px; background:#f8fafd; margin-bottom:10px; border-left:4px solid #2a7de1; transition:0.15s; }
+    .admin-item:hover { background:#eef4fa; }
+    .admin-item .info { flex:1; }
+    .admin-item .info .judul { font-weight:600; color:#1a3b5d; }
+    .admin-item .info .tanggal { font-size:13px; color:#5a7a9a; margin-left:12px; }
+    .admin-item .info .status-badge { font-size:12px; background:#dce5ef; padding:2px 10px; border-radius:20px; margin-left:10px; }
+    .admin-item .actions { display:flex; gap:8px; }
+    .admin-item .actions button { border:none; background:transparent; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:600; font-size:13px; transition:0.15s; }
+    .admin-item .actions .edit-btn { color:#2a7de1; background:#e3edfa; }
+    .admin-item .actions .edit-btn:hover { background:#c7dbf5; }
+    .admin-item .actions .delete-btn { color:#c0392b; background:#fde8e8; }
+    .admin-item .actions .delete-btn:hover { background:#f8d0d0; }
+    .admin-empty { text-align:center; color:#5a7a9a; padding:30px 0; }
+    @media (max-width:600px) { .filters { flex-direction:column; } .filter-group { width:100%; } .filter-group input { flex:1; } .modal { padding:20px; } .tab-nav button { padding:8px 16px; font-size:14px; } .admin-item { flex-wrap:wrap; gap:10px; } .admin-item .actions { width:100%; justify-content:flex-end; } .notulen-grid { grid-template-columns:1fr; } .status-dropdown { min-width:70px; font-size:11px; padding:2px 6px; } }
   </style>
 </head>
 <body>
@@ -701,101 +201,55 @@
 
 <script>
   // ============================================================
-  //  DATA & STORAGE
+  //  API BASE URL (sesuaikan jika perlu)
   // ============================================================
-  const STORAGE_KEY = 'notulenData';
+  const API_BASE = 'http://localhost:3000/api';
 
-  const defaultData = [
-    {
-      id: 1,
-      judul: 'Rapat Evaluasi Proyek Q1',
-      tanggal: '2026-01-15',
-      status: 'Selesai',
-      pembahasan: 'Membahas capaian target Q1, kendala teknis, dan solusi yang telah diimplementasikan.',
-      keputusan: 'Melanjutkan proyek dengan penambahan 2 developer. Anggaran disetujui.',
-      tindakLanjut: ['Rekrutmen developer baru selesai 1 Feb', 'Update roadmap proyek', 'Rapat koordinasi mingguan setiap Senin']
-    },
-    {
-      id: 2,
-      judul: 'Rapat Perencanaan Anggaran Tahunan',
-      tanggal: '2026-01-22',
-      status: 'Berjalan',
-      pembahasan: 'Diskusi alokasi anggaran untuk departemen IT, Marketing, dan Operasional.',
-      keputusan: 'Anggaran IT dinaikkan 15%, marketing tetap, operasional dikurangi 5%.',
-      tindakLanjut: ['Tim finance menyusun detail anggaran', 'Presentasi ke direksi pada 30 Jan']
-    },
-    {
-      id: 3,
-      judul: 'Rapat Koordinasi Tim Produk',
-      tanggal: '2026-02-03',
-      status: 'Selesai',
-      pembahasan: 'Pembahasan fitur baru untuk rilis Maret, prioritas backlogs, dan sprint planning.',
-      keputusan: 'Fitur A dan B menjadi prioritas. Sprint dimulai 5 Feb.',
-      tindakLanjut: ['Update backlogs di Jira', 'Desain UI untuk fitur B selesai 10 Feb']
-    },
-    {
-      id: 4,
-      judul: 'Rapat Review Kinerja Karyawan',
-      tanggal: '2026-02-10',
-      status: 'Direncanakan',
-      pembahasan: 'Menyusun format penilaian kinerja dan jadwal review untuk semua divisi.',
-      keputusan: 'Menggunakan format baru dengan 5 kriteria. Jadwal review 1-15 Maret.',
-      tindakLanjut: ['Sosialisasi format ke seluruh kepala divisi', 'Buat template penilaian di system HR']
-    },
-    {
-      id: 5,
-      judul: 'Rapat Keamanan Data dan Infrastruktur',
-      tanggal: '2026-02-17',
-      status: 'Berjalan',
-      pembahasan: 'Evaluasi kebijakan keamanan, update sertifikat, dan rencana migrasi cloud.',
-      keputusan: 'Migrasi ke cloud dilakukan bertahap mulai Maret. Peningkatan autentikasi dua faktor.',
-      tindakLanjut: ['Audit keamanan oleh tim eksternal', 'Persiapan infrastruktur untuk migrasi']
-    },
-    {
-      id: 6,
-      judul: 'Rapat Koordinasi Bulan Agustus 2026 (Depo Terpadu)',
-      tanggal: '2026-08-24',
-      status: 'Berjalan',
-      pembahasan: '1. keranjang yang agak besar, blender\n2. jadwal anak orientasi di putar atau tidak',
-      keputusan: '1. bersurat lagi untuk pengajuan dan followup',
-      tindakLanjut: ['keranjang sudah dikasih oleh bagian umum', 'blender sudah bersurat']
-    },
-    {
-      id: 7,
-      judul: 'Rapat Koordinasi Bulan Agustus 2026 (Depo Rawat Inap)',
-      tanggal: '2026-08-24',
-      status: 'Berjalan',
-      pembahasan: '1. penilaian orientasi\n2. Farklin hanya 4 orang sehingga tidak bisa mengcover semua ruangan dan pasien\n3. Orientasi yang ke rawat inap Irin (rolling) : mba elsa\n4. Biaya jasa farmasi untuk pasien nuri dan kemo',
-      keputusan: '1. evaluasi oleh koordinator\n2. solusi sementara jika tenaganya belum terpenuhi : pilih ruangan kritikal yang membutuhkan apoteker yang standby, dan ada ruangan yang tidak diberikan apoteker. Jika ada yang perlu dikonfirmasikan bisa by phone\n3. orientasi yang ke Inap (rolling) : mba shella, ka mery, dinda\n4. bersurat ke management terkait jasa pelayanan farmasi pasien nuri dan kemo',
-      tindakLanjut: ['Tidak ada tindak lanjut']
-    },
-    {
-      id: 8,
-      judul: 'Rapat Koordinasi Bulan Agustus 2026 (Depo IGD dan IBS)',
-      tanggal: '2026-08-24',
-      status: 'Berjalan',
-      pembahasan: '1. barang gudang datang di igd jika diambil depo lain\n2. ruangan masukan resep malam hari ke IGD langsung by phone >> kendala : petugas igd kehabisan waktu hanya untuk cek saja',
-      keputusan: '1. infokan barang yang diambil melalui "grup konfirmasi" agar bisa terfollowup ke gudang\n2. jika order obat malam hari ke depo IGD by wa agar dapat terdokumentasi dan tidak melalui by phone agar terfollowup dan tidak mengabaskan waktu hanya untuk megecek resep sudah masuk/belum',
-      tindakLanjut: ['Tidak ada tindak lanjut']
-    }
-  ];
-
-  function loadData() {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      try {
-        return JSON.parse(stored);
-      } catch (e) {
-        return defaultData;
-      }
-    } else {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultData));
-      return defaultData;
-    }
+  // ============================================================
+  //  FUNGSI API
+  // ============================================================
+  async function fetchNotulen() {
+    const res = await fetch(`${API_BASE}/notulen`);
+    if (!res.ok) throw new Error('Gagal mengambil data');
+    return res.json();
   }
 
-  function saveData(data) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  async function addNotulen(data) {
+    const res = await fetch(`${API_BASE}/notulen`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error('Gagal menambah notulen');
+    return res.json();
+  }
+
+  async function updateNotulen(id, data) {
+    const res = await fetch(`${API_BASE}/notulen/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error('Gagal mengupdate notulen');
+    return res.json();
+  }
+
+  async function updateStatus(id, status) {
+    const res = await fetch(`${API_BASE}/notulen/${id}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status })
+    });
+    if (!res.ok) throw new Error('Gagal mengupdate status');
+    return res.json();
+  }
+
+  async function deleteNotulen(id) {
+    const res = await fetch(`${API_BASE}/notulen/${id}`, {
+      method: 'DELETE'
+    });
+    if (!res.ok) throw new Error('Gagal menghapus notulen');
+    return res;
   }
 
   // ============================================================
@@ -831,7 +285,7 @@
   }
 
   // ============================================================
-  //  RENDER DASHBOARD (dengan dropdown status)
+  //  RENDER DASHBOARD
   // ============================================================
   const grid = document.getElementById('notulenGrid');
   const searchInput = document.getElementById('search');
@@ -839,15 +293,15 @@
   const dateTo = document.getElementById('dateTo');
   const resetBtn = document.getElementById('resetBtn');
 
-  // Fungsi untuk mengubah status via dropdown
-  function handleStatusChange(id, newStatus) {
-    let data = loadData();
-    const item = data.find(d => d.id === id);
-    if (!item) return;
-    item.status = newStatus;
-    saveData(data);
-    // Refresh tampilan agar dropdown di kartu lain ikut sync
-    filterNotulen();
+  let allData = [];
+
+  async function loadData() {
+    try {
+      allData = await fetchNotulen();
+      filterNotulen();
+    } catch (err) {
+      alert('Gagal memuat data: ' + err.message);
+    }
   }
 
   function renderNotulen(data) {
@@ -912,7 +366,6 @@
       // === DROPDOWN STATUS ===
       const statusSelect = document.createElement('select');
       statusSelect.className = 'status-dropdown';
-      // Tambahkan class warna sesuai status
       const statusClass = item.status === 'Selesai' ? 'status-selesai' :
                           item.status === 'Batal' ? 'status-batal' : 'status-berjalan';
       statusSelect.classList.add(statusClass);
@@ -928,24 +381,30 @@
         statusSelect.appendChild(option);
       });
 
-      // Event change dropdown
-      statusSelect.addEventListener('change', function(e) {
+      statusSelect.addEventListener('change', async function(e) {
         e.stopPropagation();
         const newStatus = this.value;
-        handleStatusChange(item.id, newStatus);
-        // Update class warna setelah perubahan
-        this.className = 'status-dropdown';
-        const newClass = newStatus === 'Selesai' ? 'status-selesai' :
-                         newStatus === 'Batal' ? 'status-batal' : 'status-berjalan';
-        this.classList.add(newClass);
+        try {
+          await updateStatus(item.id, newStatus);
+          // Update class
+          this.className = 'status-dropdown';
+          const newClass = newStatus === 'Selesai' ? 'status-selesai' :
+                           newStatus === 'Batal' ? 'status-batal' : 'status-berjalan';
+          this.classList.add(newClass);
+          // Refresh data
+          await loadData();
+        } catch (err) {
+          alert('Gagal update status: ' + err.message);
+          // Kembalikan pilihan ke status sebelumnya
+          this.value = item.status;
+        }
       });
 
-      // Mencegah klik pada dropdown membuka modal
       statusSelect.addEventListener('click', function(e) {
         e.stopPropagation();
       });
 
-      // === META (tanggal + status dropdown) ===
+      // === META ===
       const metaDiv = document.createElement('div');
       metaDiv.className = 'meta';
       const dateSpan = document.createElement('span');
@@ -965,7 +424,6 @@
       card.appendChild(keputusanEl);
       card.appendChild(tlEl);
 
-      // Klik pada kartu (selain dropdown) untuk membuka modal
       card.addEventListener('click', (e) => {
         if (e.target.tagName === 'SELECT') return;
         openDetail(item.id);
@@ -976,7 +434,6 @@
   }
 
   function filterNotulen() {
-    const allData = loadData();
     const keyword = searchInput.value.toLowerCase().trim();
     const from = dateFrom.value;
     const to = dateTo.value;
@@ -1016,8 +473,7 @@
   const closeModalBtn = document.getElementById('closeModal');
 
   function openDetail(id) {
-    const data = loadData();
-    const item = data.find(d => d.id === id);
+    const item = allData.find(d => d.id === id);
     if (!item) return;
 
     modalTitle.textContent = item.judul;
@@ -1068,7 +524,7 @@
   });
 
   // ============================================================
-  //  ADMIN PANEL
+  //  ADMIN PANEL (menggunakan API)
   // ============================================================
   let editingId = null;
 
@@ -1084,47 +540,62 @@
   const formTitle = document.getElementById('formTitle');
   const adminListContainer = document.getElementById('adminListContainer');
 
-  function renderAdminList() {
-    const data = loadData();
-    if (data.length === 0) {
-      adminListContainer.innerHTML = '<div class="admin-empty">Belum ada notulen. Tambahkan yang baru!</div>';
-      return;
+  async function renderAdminList() {
+    try {
+      const data = await fetchNotulen();
+      if (data.length === 0) {
+        adminListContainer.innerHTML = '<div class="admin-empty">Belum ada notulen. Tambahkan yang baru!</div>';
+        return;
+      }
+      let html = '';
+      data.forEach(item => {
+        html += `
+          <div class="admin-item">
+            <div class="info">
+              <span class="judul">${item.judul}</span>
+              <span class="tanggal">${item.tanggal}</span>
+              <span class="status-badge">${item.status}</span>
+            </div>
+            <div class="actions">
+              <button class="edit-btn" data-id="${item.id}">✏️ Edit</button>
+              <button class="delete-btn" data-id="${item.id}">🗑️ Hapus</button>
+            </div>
+          </div>
+        `;
+      });
+      adminListContainer.innerHTML = html;
+
+      document.querySelectorAll('.edit-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const id = parseInt(btn.dataset.id);
+          loadToForm(id);
+        });
+      });
+
+      document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const id = parseInt(btn.dataset.id);
+          if (confirm('Yakin ingin menghapus notulen ini?')) {
+            handleDelete(id);
+          }
+        });
+      });
+    } catch (err) {
+      alert('Gagal memuat data admin: ' + err.message);
     }
-    let html = '';
-    data.forEach(item => {
-      html += `
-        <div class="admin-item">
-          <div class="info">
-            <span class="judul">${item.judul}</span>
-            <span class="tanggal">${item.tanggal}</span>
-            <span class="status-badge">${item.status}</span>
-          </div>
-          <div class="actions">
-            <button class="edit-btn" data-id="${item.id}">✏️ Edit</button>
-            <button class="delete-btn" data-id="${item.id}">🗑️ Hapus</button>
-          </div>
-        </div>
-      `;
-    });
-    adminListContainer.innerHTML = html;
+  }
 
-    document.querySelectorAll('.edit-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const id = parseInt(btn.dataset.id);
-        loadToForm(id);
-      });
-    });
-
-    document.querySelectorAll('.delete-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const id = parseInt(btn.dataset.id);
-        if (confirm('Yakin ingin menghapus notulen ini?')) {
-          deleteNotulen(id);
-        }
-      });
-    });
+  async function handleDelete(id) {
+    try {
+      await deleteNotulen(id);
+      await loadData();
+      await renderAdminList();
+      alert('Notulen berhasil dihapus!');
+    } catch (err) {
+      alert('Gagal menghapus: ' + err.message);
+    }
   }
 
   function resetForm() {
@@ -1137,33 +608,29 @@
     if (!f_tanggal.value) f_tanggal.value = today;
   }
 
-  function loadToForm(id) {
-    const data = loadData();
-    const item = data.find(d => d.id === id);
-    if (!item) return;
+  async function loadToForm(id) {
+    try {
+      const data = await fetchNotulen();
+      const item = data.find(d => d.id === id);
+      if (!item) return;
 
-    f_judul.value = item.judul;
-    f_tanggal.value = item.tanggal;
-    f_status.value = item.status;
-    f_pembahasan.value = item.pembahasan || '';
-    f_keputusan.value = item.keputusan || '';
-    f_tindaklanjut.value = (item.tindakLanjut || []).join('\n');
+      f_judul.value = item.judul;
+      f_tanggal.value = item.tanggal;
+      f_status.value = item.status;
+      f_pembahasan.value = item.pembahasan || '';
+      f_keputusan.value = item.keputusan || '';
+      f_tindaklanjut.value = (item.tindakLanjut || []).join('\n');
 
-    editingId = id;
-    submitBtn.textContent = 'Update Notulen';
-    formTitle.textContent = '✏️ Edit Notulen';
-    cancelEditBtn.style.display = 'inline-block';
+      editingId = id;
+      submitBtn.textContent = 'Update Notulen';
+      formTitle.textContent = '✏️ Edit Notulen';
+      cancelEditBtn.style.display = 'inline-block';
+    } catch (err) {
+      alert('Gagal memuat data untuk edit: ' + err.message);
+    }
   }
 
-  function deleteNotulen(id) {
-    let data = loadData();
-    data = data.filter(d => d.id !== id);
-    saveData(data);
-    renderAdminList();
-    filterNotulen();
-  }
-
-  adminForm.addEventListener('submit', (e) => {
+  adminForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
     const judul = f_judul.value.trim();
@@ -1179,40 +646,20 @@
       return;
     }
 
-    let data = loadData();
-
-    if (editingId !== null) {
-      const index = data.findIndex(d => d.id === editingId);
-      if (index !== -1) {
-        data[index] = {
-          ...data[index],
-          judul,
-          tanggal,
-          status,
-          pembahasan,
-          keputusan,
-          tindakLanjut
-        };
+    try {
+      if (editingId !== null) {
+        await updateNotulen(editingId, { judul, tanggal, status, pembahasan, keputusan, tindakLanjut });
+        alert('Notulen berhasil diupdate!');
+      } else {
+        await addNotulen({ judul, tanggal, status, pembahasan, keputusan, tindakLanjut });
+        alert('Notulen berhasil ditambahkan!');
       }
-    } else {
-      const newId = data.length > 0 ? Math.max(...data.map(d => d.id)) + 1 : 1;
-      data.push({
-        id: newId,
-        judul,
-        tanggal,
-        status,
-        pembahasan,
-        keputusan,
-        tindakLanjut
-      });
+      resetForm();
+      await loadData();
+      await renderAdminList();
+    } catch (err) {
+      alert('Gagal menyimpan: ' + err.message);
     }
-
-    saveData(data);
-    resetForm();
-    renderAdminList();
-    filterNotulen();
-    alert(editingId !== null ? 'Notulen berhasil diupdate!' : 'Notulen berhasil ditambahkan!');
-    editingId = null;
   });
 
   cancelEditBtn.addEventListener('click', resetForm);
@@ -1227,7 +674,7 @@
   };
 
   tabButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       tabButtons.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
 
@@ -1237,11 +684,11 @@
       });
 
       if (tab === 'admin') {
-        renderAdminList();
+        await renderAdminList();
         resetForm();
       }
       if (tab === 'dashboard') {
-        filterNotulen();
+        await loadData();
       }
     });
   });
@@ -1252,7 +699,7 @@
   const today = new Date().toISOString().split('T')[0];
   f_tanggal.value = today;
 
-  filterNotulen();
+  loadData();
   renderAdminList();
 </script>
 </body>
