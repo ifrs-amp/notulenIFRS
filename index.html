@@ -19,6 +19,8 @@
     --warn-soft:#F6EEE0;
     --bad:#A23B3B;
     --bad-soft:#F4E5E3;
+    --tunda:#7A5C9E;
+    --tunda-soft:#EFE7F5;
     --serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
     --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
   }
@@ -155,6 +157,7 @@
   .status-selesai{background:var(--ok-soft); color:var(--ok);}
   .status-berjalan{background:var(--warn-soft); color:var(--warn);}
   .status-batal{background:var(--bad-soft); color:var(--bad);}
+  .status-tunda{background:var(--tunda-soft); color:var(--tunda);}
   .empty-list{
     color:var(--ink-soft);
     font-size:13px;
@@ -350,11 +353,12 @@
   }
   .dash-stats{
     display:grid;
-    grid-template-columns:repeat(4, 1fr);
+    grid-template-columns:repeat(5, 1fr);
     gap:12px;
     margin-bottom:26px;
   }
-  @media (max-width:700px){ .dash-stats{grid-template-columns:repeat(2,1fr);} }
+  @media (max-width:900px){ .dash-stats{grid-template-columns:repeat(3,1fr);} }
+  @media (max-width:520px){ .dash-stats{grid-template-columns:repeat(2,1fr);} }
   .stat-card{
     border:1px solid var(--line);
     border-radius:10px;
@@ -374,6 +378,7 @@
   .stat-card.st-berjalan .stat-num{color:var(--warn);}
   .stat-card.st-selesai .stat-num{color:var(--ok);}
   .stat-card.st-batal .stat-num{color:var(--bad);}
+  .stat-card.st-tunda .stat-num{color:var(--tunda);}
   .dash-grid{
     display:flex;
     flex-direction:column;
@@ -434,6 +439,17 @@
     margin-top:6px;
   }
   .riwayat-toggle:hover{text-decoration:underline;}
+  select.status-select-pill{
+    font-size:11.5px;
+    font-weight:700;
+    padding:3px 22px 3px 10px;
+    border-radius:20px;
+    border:1px solid transparent;
+    cursor:pointer;
+    flex-shrink:0;
+  }
+  select.status-select-pill:hover{border-color:currentColor;}
+  select.status-select-pill:focus{outline:2px solid var(--accent); outline-offset:1px;}
 </style>
 </head>
 <body>
@@ -452,6 +468,7 @@
     <div class="filter-row">
       <button class="chip active" data-status="semua" onclick="setFilter('semua')">Semua</button>
       <button class="chip" data-status="berjalan" onclick="setFilter('berjalan')">Berjalan</button>
+      <button class="chip" data-status="tunda" onclick="setFilter('tunda')">Tunda</button>
       <button class="chip" data-status="selesai" onclick="setFilter('selesai')">Selesai</button>
       <button class="chip" data-status="batal" onclick="setFilter('batal')">Batal</button>
     </div>
@@ -481,7 +498,7 @@ let selectedId = null;
 let isEditingNew = false;
 let pollTimer = null;
 
-const STATUS_LABEL = { berjalan: 'Berjalan', selesai: 'Selesai', batal: 'Batal' };
+const STATUS_LABEL = { berjalan: 'Berjalan', selesai: 'Selesai', tunda: 'Tunda', batal: 'Batal' };
 
 function uid(){
   return 'r' + Date.now() + Math.random().toString(16).slice(2,8);
@@ -694,6 +711,7 @@ function renderDashboard(main){
   const all = Object.values(rapatData);
   const total = all.length;
   const cBerjalan = all.filter(r => r.status === 'berjalan').length;
+  const cTunda = all.filter(r => r.status === 'tunda').length;
   const cSelesai = all.filter(r => r.status === 'selesai').length;
   const cBatal = all.filter(r => r.status === 'batal').length;
 
@@ -714,7 +732,12 @@ function renderDashboard(main){
               <h3 class="dash-card-title">${escapeHtml(r.judul || '(tanpa judul)')}</h3>
               <div class="dash-card-date">${fmtDate(r.tanggal)}</div>
             </div>
-            <span class="status-pill-inline status-${r.status}">${STATUS_LABEL[r.status] || r.status}</span>
+            <select class="status-select-pill status-${r.status}" onchange="handleStatusChange('${r.id}', this.value)">
+              <option value="berjalan" ${r.status==='berjalan'?'selected':''}>Berjalan</option>
+              <option value="tunda" ${r.status==='tunda'?'selected':''}>Tunda</option>
+              <option value="selesai" ${r.status==='selesai'?'selected':''}>Selesai</option>
+              <option value="batal" ${r.status==='batal'?'selected':''}>Batal</option>
+            </select>
           </div>
           <div class="dash-fields">
             <div>
@@ -739,7 +762,7 @@ function renderDashboard(main){
     <div class="dash-header">
       <div>
         <h1 class="dash-title">Dashboard Notulen Rapat</h1>
-        <p class="dash-sub">Rekap seluruh rapat yang diinput Admin, diperbarui otomatis secara realtime.</p>
+        <p class="dash-sub">Rekap seluruh rapat yang diinput Admin, diperbarui otomatis secara realtime. Status bisa diubah langsung lewat dropdown di tiap kartu.</p>
       </div>
       <span class="dash-updated">Diperbarui ${new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'})}</span>
     </div>
@@ -747,12 +770,38 @@ function renderDashboard(main){
     <div class="dash-stats">
       <div class="stat-card"><div class="stat-num">${total}</div><div class="stat-label">Total Rapat</div></div>
       <div class="stat-card st-berjalan"><div class="stat-num">${cBerjalan}</div><div class="stat-label">Berjalan</div></div>
+      <div class="stat-card st-tunda"><div class="stat-num">${cTunda}</div><div class="stat-label">Tunda</div></div>
       <div class="stat-card st-selesai"><div class="stat-num">${cSelesai}</div><div class="stat-label">Selesai</div></div>
       <div class="stat-card st-batal"><div class="stat-num">${cBatal}</div><div class="stat-label">Batal</div></div>
     </div>
 
     <div class="dash-grid">${cardsHtml}</div>
   `;
+}
+
+async function handleStatusChange(id, newStatus){
+  const current = rapatData[id];
+  if(!current) return;
+  const item = {
+    id: current.id,
+    tanggal: current.tanggal,
+    judul: current.judul,
+    pembahasan: current.pembahasan,
+    tindakLanjut: current.tindakLanjut,
+    hasilTindakLanjut: current.hasilTindakLanjut,
+    status: newStatus
+  };
+  try{
+    await saveRapat(item);
+    if(expandedRiwayat[id]){
+      await loadRiwayat(id);
+    }
+    renderMain();
+  }catch(e){
+    showToast('Gagal mengubah status, coba lagi');
+    console.error(e);
+    renderMain();
+  }
 }
 
 function toggleRiwayat(id){
@@ -797,6 +846,7 @@ function renderForm(main, r, isNew){
       <div class="field-label">Status</div>
       <select id="f_status" class="status-select">
         <option value="berjalan" ${r.status==='berjalan'?'selected':''}>Berjalan</option>
+        <option value="tunda" ${r.status==='tunda'?'selected':''}>Tunda</option>
         <option value="selesai" ${r.status==='selesai'?'selected':''}>Selesai</option>
         <option value="batal" ${r.status==='batal'?'selected':''}>Batal</option>
       </select>
