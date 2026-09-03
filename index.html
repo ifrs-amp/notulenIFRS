@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dashboard & Admin Notulen Rapat</title>
   <style>
+    /* ===== STYLE SAMA ===== */
     * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; }
     body { background:#f4f7fc; padding:20px; }
     .container { max-width:1200px; margin:0 auto; }
@@ -195,26 +196,37 @@
   const API_BASE = 'https://script.google.com/macros/s/AKfycbzQNWXvqPJZRm2TDMlaBf6QJXCOMMA8eujG1tFZHjsUsEIRo8btSFc_yWYCLlN7ynTo3Q/exec';
 
   // ============================================================
-  //  FUNGSI API dengan penanganan CORS
+  //  FUNGSI API — Menggunakan FormData untuk POST (tanpa preflight)
   // ============================================================
 
   async function fetchNotulen() {
     const res = await fetch(API_BASE, {
       method: 'GET',
-      mode: 'cors',
-      headers: { 'Accept': 'application/json' }
+      mode: 'cors'
     });
     if (!res.ok) throw new Error('Gagal mengambil data (HTTP ' + res.status + ')');
     return res.json();
   }
 
   async function postAction(action, data) {
-    const payload = { action, ...data };
+    const formData = new FormData();
+    formData.append('action', action);
+    Object.keys(data).forEach(key => {
+      if (data[key] !== undefined && data[key] !== null) {
+        // Jika array (tindakLanjut) kita ubah menjadi string dengan newline
+        if (Array.isArray(data[key])) {
+          formData.append(key, data[key].join('\n'));
+        } else {
+          formData.append(key, data[key]);
+        }
+      }
+    });
+
     const res = await fetch(API_BASE, {
       method: 'POST',
       mode: 'cors',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      // Jangan set Content-Type, biar browser pakai multipart/form-data
+      body: formData
     });
     if (!res.ok) throw new Error('Gagal melakukan aksi (HTTP ' + res.status + ')');
     return res.json();
