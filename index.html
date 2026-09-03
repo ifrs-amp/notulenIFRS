@@ -293,6 +293,36 @@
     color:var(--ink-soft);
     margin-top:2px;
   }
+  .riwayat-block{
+    margin-top:28px;
+    border-top:1px solid var(--line);
+    padding-top:16px;
+  }
+  .riwayat-title{
+    font-family:var(--serif);
+    font-size:16px;
+    margin:0 0 12px 0;
+  }
+  .riwayat-item{
+    display:flex;
+    gap:12px;
+    padding:9px 0;
+    border-bottom:1px dashed var(--line);
+    font-size:13px;
+  }
+  .riwayat-item:last-child{border-bottom:none;}
+  .riwayat-time{
+    color:var(--ink-soft);
+    min-width:150px;
+    flex-shrink:0;
+  }
+  .riwayat-body b{font-weight:700;}
+  .riwayat-empty{
+    color:var(--ink-soft);
+    font-size:13px;
+    font-style:italic;
+  }
+  .sync-error{color:var(--bad);}
 </style>
 </head>
 <body>
@@ -329,9 +359,13 @@
 <div class="save-toast" id="toast">Tersimpan</div>
 
 <script>
+// URL Web App Google Apps Script (backend Google Sheets + riwayat)
+const API_URL = 'https://script.google.com/macros/s/AKfycbzQNWXvqPJZRm2TDMlaBf6QJXCOMMA8eujG1tFZHjsUsEIRo8btSFc_yWYCLlN7ynTo3Q/exec';
+
 let mode = 'staf'; // 'staf' | 'admin'
 let filterStatus = 'semua';
 let rapatData = {}; // id -> object
+let riwayatCache = {}; // id -> array riwayat
 let selectedId = null;
 let isEditingNew = false;
 let pollTimer = null;
@@ -342,46 +376,94 @@ function uid(){
   return 'r' + Date.now() + Math.random().toString(16).slice(2,8);
 }
 
+function toDateInputValue(v){
+  if(!v) return '';
+  const s = String(v);
+  return s.includes('T') ? s.slice(0,10) : s;
+}
+
 function fmtDate(iso){
-  if(!iso) return '(tanggal belum diisi)';
-  const d = new Date(iso + 'T00:00:00');
-  if(isNaN(d)) return iso;
+  const s = toDateInputValue(iso);
+  if(!s) return '(tanggal belum diisi)';
+  const d = new Date(s + 'T00:00:00');
+  if(isNaN(d)) return s;
   return d.toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' });
+}
+
+function fmtDateTime(v){
+  if(!v) return '';
+  const d = new Date(v);
+  if(isNaN(d)) return String(v);
+  return d.toLocaleString('id-ID', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+}
+
+// Ubah objek dari Sheet (ID, Tanggal, Judul, ...) jadi objek internal (id, tanggal, judul, ...)
+function sheetToItem(o){
+  return {
+    id: o.ID,
+    tanggal: toDateInputValue(o.Tanggal),
+    judul: o.Judul || '',
+    pembahasan: o.Pembahasan || '',
+    tindakLanjut: o.RencanaTindakLanjut || '',
+    hasilTindakLanjut: o.HasilTindakLanjut || '',
+    status: o.Status || 'berjalan',
+    createdAt: o.DibuatPada,
+    updatedAt: o.DiubahPada
+  };
 }
 
 async function loadAll(){
   try{
-    const res = await window.storage.list('rapat:', true);
-    const keys = (res && res.keys) || [];
-    const entries = await Promise.all(keys.map(async k => {
-      try{
-        const r = await window.storage.get(k, true);
-        return r ? JSON.parse(r.value) : null;
-      }catch(e){ return null; }
-    }));
+    const res = await fetch(API_URL + '?action=list');
+    const json = await res.json();
+    if(!json.ok) throw new Error(json.error || 'Gagal memuat');
     const newData = {};
-    entries.filter(Boolean).forEach(item => { newData[item.id] = item; });
+    (json.data || []).forEach(o => { const item = sheetToItem(o); newData[item.id] = item; });
     rapatData = newData;
     renderList();
     if(selectedId && rapatData[selectedId] && !isEditingNew){
       renderMain();
     }
-    document.getElementById('syncLabel').textContent = 'Tersinkron \u2022 terlihat semua staf';
+    document.getElementById('syncLabel').textContent = 'Tersinkron ke Google Sheets \u2022 terlihat semua staf';
+    document.getElementById('syncLabel').classList.remove('sync-error');
   }catch(e){
-    document.getElementById('syncLabel').textContent = 'Gagal memuat data';
+    document.getElementById('syncLabel').textContent = 'Gagal terhubung ke Google Sheets';
+    document.getElementById('syncLabel').classList.add('sync-error');
+    console.error(e);
+  }
+}
+
+async function loadRiwayat(id){
+  try{
+    const res = await fetch(API_URL + '?action=history&id=' + encodeURIComponent(id));
+    const json = await res.json();
+    riwayatCache[id] = json.ok ? (json.data || []) : [];
+  }catch(e){
+    riwayatCache[id] = [];
     console.error(e);
   }
 }
 
 async function saveRapat(item){
-  await window.storage.set('rapat:' + item.id, JSON.stringify(item), true);
-  rapatData[item.id] = item;
-  showToast('Tersimpan');
-  renderList();
+  const res = await fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ action: 'save', item })
+  });
+  const json = await res.json();
+  if(!json.ok) throw new Error(json.error || 'Gagal menyimpan');
+  showToast('Tersimpan ke Google Sheets');
+  await loadAll();
 }
 
 async function deleteRapat(id){
-  await window.storage.delete('rapat:' + id, true);
+  const res = await fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ action: 'delete', id })
+  });
+  const json = await res.json();
+  if(!json.ok) throw new Error(json.error || 'Gagal menghapus');
   delete rapatData[id];
   selectedId = null;
   renderList();
@@ -427,7 +509,13 @@ function renderList(){
   items.forEach(r => {
     const div = document.createElement('div');
     div.className = 'item' + (r.id === selectedId ? ' selected' : '');
-    div.onclick = () => { isEditingNew = false; selectedId = r.id; renderList(); renderMain(); };
+    div.onclick = () => {
+      isEditingNew = false;
+      selectedId = r.id;
+      renderList();
+      renderMain();
+      loadRiwayat(r.id).then(() => { if(selectedId === r.id) renderMain(); });
+    };
     div.innerHTML = `
       <div class="item-title">${escapeHtml(r.judul || '(tanpa judul)')}</div>
       <div class="item-meta">
@@ -501,6 +589,8 @@ function renderView(main, r){
       <div class="field-view ${r.hasilTindakLanjut ? '' : 'placeholder'}">${escapeHtml(r.hasilTindakLanjut || 'Belum diisi.')}</div>
     </div>
     <p class="viewer-note">Tampilan staf — hanya lihat. Perubahan dilakukan oleh Admin dan akan tampil otomatis di sini.</p>
+
+    ${renderRiwayatHtml(r.id)}
   `;
 }
 
@@ -541,13 +631,15 @@ function renderForm(main, r, isNew){
     </div>
 
     <div class="row-actions">
-      <button class="btn btn-primary" onclick="handleSave('${r.id}', ${isNew})">Simpan</button>
+      <button class="btn btn-primary" onclick="handleSave('${r.id}', ${isNew}, event)">Simpan</button>
       ${isNew ? '<button class="btn" onclick="cancelNew()">Batal</button>' : '<button class="btn btn-danger" onclick="handleDelete(\''+r.id+'\')">Hapus Rapat</button>'}
     </div>
+
+    ${isNew ? '' : renderRiwayatHtml(r.id)}
   `;
 }
 
-async function handleSave(id, isNew){
+async function handleSave(id, isNew, evt){
   const item = {
     id: id,
     tanggal: document.getElementById('f_tanggal').value,
@@ -555,17 +647,27 @@ async function handleSave(id, isNew){
     pembahasan: document.getElementById('f_pembahasan').value,
     tindakLanjut: document.getElementById('f_tindak').value,
     hasilTindakLanjut: document.getElementById('f_hasil').value,
-    status: document.getElementById('f_status').value,
-    createdAt: (rapatData[id] && rapatData[id].createdAt) || Date.now()
+    status: document.getElementById('f_status').value
   };
   if(!item.judul){
     showToast('Judul rapat wajib diisi');
     return;
   }
-  await saveRapat(item);
-  isEditingNew = false;
-  selectedId = id;
-  renderMain();
+  const btn = evt.target;
+  btn.disabled = true;
+  btn.textContent = 'Menyimpan...';
+  try{
+    await saveRapat(item);
+    isEditingNew = false;
+    selectedId = id;
+    await loadRiwayat(id);
+    renderMain();
+  }catch(e){
+    showToast('Gagal menyimpan, coba lagi');
+    console.error(e);
+    btn.disabled = false;
+    btn.textContent = 'Simpan';
+  }
 }
 
 function cancelNew(){
@@ -574,8 +676,35 @@ function cancelNew(){
 }
 
 async function handleDelete(id){
-  if(!confirm('Hapus rapat ini? Tindakan tidak dapat dibatalkan.')) return;
-  await deleteRapat(id);
+  if(!confirm('Hapus rapat ini? Tindakan tidak dapat dibatalkan, tapi jejaknya tetap tersimpan di Riwayat.')) return;
+  try{
+    await deleteRapat(id);
+    showToast('Rapat dihapus');
+  }catch(e){
+    showToast('Gagal menghapus, coba lagi');
+    console.error(e);
+  }
+}
+
+function renderRiwayatHtml(id){
+  const items = riwayatCache[id];
+  if(items === undefined){
+    return '<div class="riwayat-block"><h3 class="riwayat-title">Riwayat Perubahan</h3><div class="riwayat-empty">Memuat riwayat...</div></div>';
+  }
+  if(items.length === 0){
+    return '<div class="riwayat-block"><h3 class="riwayat-title">Riwayat Perubahan</h3><div class="riwayat-empty">Belum ada riwayat.</div></div>';
+  }
+  const rows = items.map(r => {
+    let ket = `<b>${escapeHtml(r.Aksi)}</b>`;
+    if(r.Aksi === 'Diubah' && r.StatusSebelum !== r.StatusSesudah){
+      ket += ` \u2014 status ${escapeHtml(STATUS_LABEL[r.StatusSebelum]||r.StatusSebelum)} \u2192 ${escapeHtml(STATUS_LABEL[r.StatusSesudah]||r.StatusSesudah)}`;
+    }
+    if(r.Perubahan){
+      ket += `<br><span style="color:var(--ink-soft)">${escapeHtml(r.Perubahan)}</span>`;
+    }
+    return `<div class="riwayat-item"><div class="riwayat-time">${escapeHtml(fmtDateTime(r.Waktu))}</div><div class="riwayat-body">${ket}</div></div>`;
+  }).join('');
+  return `<div class="riwayat-block"><h3 class="riwayat-title">Riwayat Perubahan</h3>${rows}</div>`;
 }
 
 async function init(){
