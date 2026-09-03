@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dashboard & Admin Notulen Rapat</title>
   <style>
-    /* ===== STYLE SAMA SEPERTI SEBELUMNYA ===== */
     * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; }
     body { background:#f4f7fc; padding:20px; }
     .container { max-width:1200px; margin:0 auto; }
@@ -94,7 +93,6 @@
     📋 Notulen Rapat
   </h1>
 
-  <!-- ===== NAV TAB ===== -->
   <div class="tab-nav">
     <button class="active" data-tab="dashboard">📊 Lihat Notulen</button>
     <button data-tab="admin">⚙️ Admin Panel</button>
@@ -123,7 +121,6 @@
   <!-- ===== TAB 2: ADMIN PANEL ===== -->
   <div id="tab-admin" class="tab-content">
     <div class="admin-container">
-      <!-- Form -->
       <div class="admin-form">
         <h3 id="formTitle">✏️ Tambah Notulen Baru</h3>
         <form id="adminForm">
@@ -162,12 +159,9 @@
         </form>
       </div>
 
-      <!-- Daftar Notulen (Admin) -->
       <div class="admin-list">
         <h3>📌 Daftar Notulen</h3>
-        <div id="adminListContainer">
-          <!-- diisi oleh JS -->
-        </div>
+        <div id="adminListContainer"></div>
       </div>
     </div>
   </div>
@@ -196,89 +190,20 @@
 
 <script>
   // ============================================================
-  //  API BASE URL — GANTI DENGAN URL WEB APP ANDA
+  //  API BASE URL — SUDAH DISESUAIKAN DENGAN WEB APP ANDA
   // ============================================================
-  const API_BASE = 'https://script.google.com/macros/s/PASTE_YOUR_DEPLOYED_ID/exec'; // <-- GANTI
+  const API_BASE = 'https://script.google.com/macros/s/AKfycbzQNWXvqPJZRm2TDMlaBf6QJXCOMMA8eujG1tFZHjsUsEIRo8btSFc_yWYCLlN7ynTo3Q/exec';
 
   // ============================================================
   //  FUNGSI API
   // ============================================================
 
-  // Helper untuk mengirim request POST dengan payload JSON
-  async function apiRequest(action, data = {}) {
-    const payload = { action, ...data };
-    const res = await fetch(API_BASE, {
-      method: 'POST',
-      mode: 'no-cors', // Penting untuk Google Apps Script (agar tidak kena CORS)
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    // Karena mode no-cors, kita tidak bisa membaca response secara langsung.
-    // Kita akan menggunakan pendekatan alternatif: return data dari server via JSONP? 
-    // Sebenarnya untuk Google Apps Script, lebih aman pakai mode 'cors' dengan mengatur izin di Apps Script.
-    // Tapi karena kita pakai Web App yang sudah dideploy, sebaiknya kita set mode 'cors' dan 
-    // di Apps Script kita tambahkan header Access-Control-Allow-Origin: *
-    // Namun untuk simplicity, kita akan gunakan mode 'cors' (default) dan 
-    // di Apps Script kita akan set header tersebut.
-    // Mari kita ubah ke mode 'cors' agar response bisa dibaca.
-    // Tapi karena Google Apps Script tidak mendukung CORS dengan mudah, kita akan 
-    // menggunakan teknik JSONP? Atau lebih baik kita pakai fetch biasa dengan mode 'cors'
-    // dan di Apps Script kita set header.
-    // Saya akan ubah kode Apps Script untuk menyertakan header CORS.
-    // Namun untuk saat ini, kita asumsikan sudah diatur.
-    // Saya akan tulis ulang bagian fetch.
-    // Untuk keandalan, kita akan gunakan cara: 
-    // - GET menggunakan fetch biasa (cors)
-    // - POST juga menggunakan fetch biasa (cors)
-    // dan di Apps Script kita tambahkan:
-    //   return ContentService
-    //     .createTextOutput(JSON.stringify(result))
-    //     .setMimeType(ContentService.MimeType.JSON)
-    //     .setHeader('Access-Control-Allow-Origin', '*');
-    // Tapi ContentService tidak punya setHeader. Kita harus gunakan HtmlService? 
-    // Sebenarnya cara terbaik adalah dengan menggunakan doGet untuk GET dan doPost untuk POST.
-    // Kita akan gunakan pendekatan yang sederhana: semua request menggunakan GET dengan parameter query? 
-    // Tidak, karena POST lebih clean.
-    // Saya akan ubah pendekatan: 
-    // - GET untuk ambil data (tanpa payload)
-    // - POST untuk operasi lain dengan payload JSON.
-    // Dan di Apps Script, doPost akan mengembalikan JSON dengan header CORS.
-    // Untuk mengatasi CORS, di Apps Script kita bisa gunakan:
-    //   return ContentService.createTextOutput(JSON.stringify(result))
-    //     .setMimeType(ContentService.MimeType.JSON);
-    // Ini sudah otomatis mengizinkan CORS? Tidak, tapi Google Apps Script Web App yang di-deploy dengan 
-    // "Execute as: me" dan "Who has access: Anyone" biasanya bisa diakses dari mana saja.
-    // Sebenarnya untuk permintaan POST dari frontend, jika Web App di-deploy sebagai "Anyone" 
-    // maka tidak perlu header CORS tambahan. 
-    // Namun untuk amannya, kita tetap gunakan mode 'cors' dan tangani error.
-    // Saya akan tulis kode fetch dengan mode 'cors' dan menangani error.
-    // Jika masih ada masalah CORS, kita bisa gunakan proxy atau teknik JSONP.
-    // Tapi karena ini untuk internal, biasanya berjalan.
-    // Saya akan lanjutkan dengan fetch biasa.
-    // Karena kita tidak bisa mengubah header di Apps Script dengan ContentService, 
-    // kita akan gunakan HtmlService untuk mengembalikan JSON? Tidak, lebih baik kita deploy sebagai Web App 
-    // dan atur "Execute as: me" dan "Who has access: Anyone" maka CORS akan longgar.
-    // Untuk amannya, saya akan tulis ulang kode Apps Script untuk menambahkan header 
-    // menggunakan ContentService tidak bisa. Tapi kita bisa gunakan doGet dengan callback JSONP.
-    // Namun itu merepotkan. Saya sarankan untuk tetap menggunakan fetch biasa dan 
-    // deploy Web App dengan akses "Anyone" dan "Execute as: me". 
-    // Saya akan lanjutkan dengan asumsi itu.
-    // Dan untuk POST, saya akan kirim sebagai FormData? Tidak, JSON lebih mudah.
-    // Baiklah, saya akan tulis kode fetch yang standar.
-    // Untuk GET, kita akan gunakan fetch(API_BASE) langsung.
-    // Untuk POST, kita gunakan fetch(API_BASE, { method: 'POST', ... }).
-    // Kita tangani error dengan try-catch.
-  }
-
-  // Kita akan buat fungsi yang lebih sederhana: 
-  // GET untuk mengambil semua data
   async function fetchNotulen() {
     const res = await fetch(API_BASE);
     if (!res.ok) throw new Error('Gagal mengambil data: ' + res.status);
     return res.json();
   }
 
-  // POST untuk operasi lain
   async function postAction(action, data) {
     const payload = { action, ...data };
     const res = await fetch(API_BASE, {
@@ -290,7 +215,6 @@
     return res.json();
   }
 
-  // Fungsi spesifik
   async function addNotulen(data) {
     return postAction('add', data);
   }
@@ -308,13 +232,13 @@
   }
 
   // ============================================================
-  //  FUNGSI BANTU: ubah teks menjadi daftar bullet
+  //  FUNGSI BANTU
   // ============================================================
+
   function textToList(text) {
     if (!text || text.trim() === '') return null;
     const lines = text.split('\n').map(s => s.trim()).filter(s => s !== '');
-    if (lines.length === 0) return null;
-    return lines;
+    return lines.length > 0 ? lines : null;
   }
 
   function renderListItems(lines) {
@@ -342,6 +266,7 @@
   // ============================================================
   //  RENDER DASHBOARD
   // ============================================================
+
   const grid = document.getElementById('notulenGrid');
   const searchInput = document.getElementById('search');
   const dateFrom = document.getElementById('dateFrom');
@@ -441,12 +366,10 @@
         const newStatus = this.value;
         try {
           await updateStatus(item.id, newStatus);
-          // Update class
           this.className = 'status-dropdown';
           const newClass = newStatus === 'Selesai' ? 'status-selesai' :
                            newStatus === 'Batal' ? 'status-batal' : 'status-berjalan';
           this.classList.add(newClass);
-          // Refresh data
           await loadData();
         } catch (err) {
           alert('Gagal update status: ' + err.message);
@@ -518,6 +441,7 @@
   // ============================================================
   //  MODAL DETAIL
   // ============================================================
+
   const modal = document.getElementById('modalDetail');
   const modalTitle = document.getElementById('modalTitle');
   const modalMeta = document.getElementById('modalMeta');
@@ -580,6 +504,7 @@
   // ============================================================
   //  ADMIN PANEL
   // ============================================================
+
   let editingId = null;
 
   const adminForm = document.getElementById('adminForm');
@@ -721,6 +646,7 @@
   // ============================================================
   //  TAB SWITCHING
   // ============================================================
+
   const tabButtons = document.querySelectorAll('.tab-nav button');
   const tabContents = {
     dashboard: document.getElementById('tab-dashboard'),
@@ -750,6 +676,7 @@
   // ============================================================
   //  INIT
   // ============================================================
+
   const today = new Date().toISOString().split('T')[0];
   f_tanggal.value = today;
 
