@@ -126,10 +126,10 @@
       color: #1a3b5d;
     }
 
-    /* ===== GRID KARTU (lebih detail) ===== */
+    /* ===== GRID KARTU ===== */
     .notulen-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
       gap: 24px;
     }
 
@@ -186,20 +186,16 @@
     .card .field strong {
       color: #1a3b5d;
       font-weight: 600;
-      display: inline-block;
-      min-width: 80px;
+      display: block;
+      margin-bottom: 2px;
     }
 
-    .card .field .value {
-      display: inline;
-    }
-
-    .card .tindak-lanjut-list {
+    .card .field ul {
       padding-left: 20px;
       margin: 4px 0;
     }
 
-    .card .tindak-lanjut-list li {
+    .card .field ul li {
       margin-bottom: 2px;
     }
 
@@ -208,7 +204,7 @@
       font-style: italic;
     }
 
-    /* ===== MODAL DETAIL (tetap dipertahankan) ===== */
+    /* ===== MODAL DETAIL ===== */
     .modal-overlay {
       display: none;
       position: fixed;
@@ -278,6 +274,15 @@
       padding-bottom: 4px;
     }
 
+    .modal .detail-section ul {
+      padding-left: 20px;
+      margin: 6px 0;
+    }
+
+    .modal .detail-section ul li {
+      margin-bottom: 4px;
+    }
+
     .modal .detail-section p {
       color: #2d4a6a;
       line-height: 1.6;
@@ -290,8 +295,11 @@
       margin-top: 6px;
     }
 
+    .modal .tindak-lanjut ul {
+      padding-left: 20px;
+    }
+
     .modal .tindak-lanjut li {
-      margin-left: 20px;
       margin-bottom: 4px;
     }
 
@@ -302,7 +310,7 @@
       grid-column: 1 / -1;
     }
 
-    /* ===== ADMIN PANEL (tidak berubah) ===== */
+    /* ===== ADMIN PANEL ===== */
     .admin-container {
       display: grid;
       grid-template-columns: 1fr 1.5fr;
@@ -607,11 +615,11 @@
           </div>
           <div class="form-group">
             <label for="f_pembahasan">Agenda / Pembahasan</label>
-            <textarea id="f_pembahasan" rows="3" placeholder="Diskusi tentang ..."></textarea>
+            <textarea id="f_pembahasan" rows="3" placeholder="Tulis setiap poin di baris baru"></textarea>
           </div>
           <div class="form-group">
             <label for="f_keputusan">Keputusan</label>
-            <textarea id="f_keputusan" rows="2" placeholder="Keputusan rapat ..."></textarea>
+            <textarea id="f_keputusan" rows="2" placeholder="Tulis setiap poin di baris baru"></textarea>
           </div>
           <div class="form-group">
             <label for="f_tindaklanjut">Tindak Lanjut (pisahkan dengan baris baru)</label>
@@ -643,11 +651,11 @@
     <div class="sub" id="modalMeta">Tanggal · Status</div>
     <div class="detail-section">
       <h4>📌 Agenda / Pembahasan</h4>
-      <p id="modalPembahasan">...</p>
+      <div id="modalPembahasan"></div>
     </div>
     <div class="detail-section">
       <h4>✅ Keputusan</h4>
-      <p id="modalKeputusan">...</p>
+      <div id="modalKeputusan"></div>
     </div>
     <div class="detail-section">
       <h4>📌 Tindak Lanjut</h4>
@@ -709,15 +717,33 @@
       keputusan: 'Migrasi ke cloud dilakukan bertahap mulai Maret. Peningkatan autentikasi dua faktor.',
       tindakLanjut: ['Audit keamanan oleh tim eksternal', 'Persiapan infrastruktur untuk migrasi']
     },
-    // Tambahan contoh sesuai file gambar
+    // Notulen baru sesuai gambar
     {
       id: 6,
       judul: 'Rapat Koordinasi Bulan Agustus 2026 (Depo Terpadu)',
       tanggal: '2026-08-24',
       status: 'Berjalan',
       pembahasan: '1. keranjang yang agak besar, blender\n2. jadwal anak orientasi di putar atau tidak',
-      keputusan: 'Belum ada keputusan final, akan dibahas lebih lanjut.',
-      tindakLanjut: ['Koordinasi dengan tim logistik', 'Cek ketersediaan blender besar']
+      keputusan: '1. bersurat lagi untuk pengajuan dan followup',
+      tindakLanjut: ['keranjang sudah dikasih oleh bagian umum', 'blender sudah bersurat']
+    },
+    {
+      id: 7,
+      judul: 'Rapat Koordinasi Bulan Agustus 2026 (Depo Rawat Inap)',
+      tanggal: '2026-08-24',
+      status: 'Berjalan',
+      pembahasan: '1. penilaian orientasi\n2. Farklin hanya 4 orang sehingga tidak bisa mengcover semua ruangan dan pasien\n3. Orientasi yang ke rawat inap Irin (rolling) : mba elsa\n4. Biaya jasa farmasi untuk pasien nuri dan kemo',
+      keputusan: '1. evaluasi oleh koordinator\n2. solusi sementara jika tenaganya belum terpenuhi : pilih ruangan kritikal yang membutuhkan apoteker yang standby, dan ada ruangan yang tidak diberikan apoteker. Jika ada yang perlu dikonfirmasikan bisa by phone\n3. orientasi yang ke Inap (rolling) : mba shella, ka mery, dinda\n4. bersurat ke management terkait jasa pelayanan farmasi pasien nuri dan kemo',
+      tindakLanjut: ['Tidak ada tindak lanjut']
+    },
+    {
+      id: 8,
+      judul: 'Rapat Koordinasi Bulan Agustus 2026 (Depo IGD dan IBS)',
+      tanggal: '2026-08-24',
+      status: 'Berjalan',
+      pembahasan: '1. barang gudang datang di igd jika diambil depo lain\n2. ruangan masukan resep malam hari ke IGD langsung by phone >> kendala : petugas igd kehabisan waktu hanya untuk cek saja',
+      keputusan: '1. infokan barang yang diambil melalui "grup konfirmasi" agar bisa terfollowup ke gudang\n2. jika order obat malam hari ke depo IGD by wa agar dapat terdokumentasi dan tidak melalui by phone agar terfollowup dan tidak mengabaskan waktu hanya untuk megecek resep sudah masuk/belum',
+      tindakLanjut: ['Tidak ada tindak lanjut']
     }
   ];
 
@@ -740,7 +766,47 @@
   }
 
   // ============================================================
-  //  RENDER DASHBOARD (dengan tampilan lengkap)
+  //  FUNGSI BANTU: ubah teks menjadi daftar bullet
+  // ============================================================
+  function textToList(text) {
+    if (!text || text.trim() === '') return null;
+    const lines = text.split('\n').map(s => s.trim()).filter(s => s !== '');
+    if (lines.length === 0) return null;
+    // Jika hanya satu baris, kembalikan sebagai paragraf
+    if (lines.length === 1) {
+      // Cek apakah mengandung pola "1. " atau "- " → tetap buat list
+      if (/^\d+\.\s/.test(lines[0]) || /^[-•]\s/.test(lines[0])) {
+        return lines; // akan di-render sebagai list
+      }
+      return lines; // tetap list dengan 1 item
+    }
+    return lines;
+  }
+
+  function renderListItems(lines) {
+    if (!lines || lines.length === 0) return null;
+    const ul = document.createElement('ul');
+    lines.forEach(line => {
+      const li = document.createElement('li');
+      li.textContent = line;
+      ul.appendChild(li);
+    });
+    return ul;
+  }
+
+  function renderFieldContent(text) {
+    const lines = textToList(text);
+    if (!lines) {
+      const span = document.createElement('span');
+      span.className = 'empty-field';
+      span.textContent = '-';
+      return span;
+    }
+    return renderListItems(lines);
+  }
+
+  // ============================================================
+  //  RENDER DASHBOARD
   // ============================================================
   const grid = document.getElementById('notulenGrid');
   const searchInput = document.getElementById('search');
@@ -760,21 +826,52 @@
       card.className = 'card';
       card.dataset.id = item.id;
 
-      // Buat daftar tindak lanjut jika ada
-      let tlHtml = '';
-      if (item.tindakLanjut && item.tindakLanjut.length > 0) {
-        tlHtml = '<ul class="tindak-lanjut-list">';
-        item.tindakLanjut.forEach(t => {
-          tlHtml += `<li>${t}</li>`;
-        });
-        tlHtml += '</ul>';
+      // Pembahasan
+      const pembahasanLines = textToList(item.pembahasan);
+      const pembahasanEl = document.createElement('div');
+      pembahasanEl.className = 'field';
+      pembahasanEl.innerHTML = '<strong>📌 Pembahasan</strong>';
+      if (pembahasanLines) {
+        pembahasanEl.appendChild(renderListItems(pembahasanLines));
       } else {
-        tlHtml = '<span class="empty-field">Tidak ada tindak lanjut</span>';
+        const span = document.createElement('span');
+        span.className = 'empty-field';
+        span.textContent = '-';
+        pembahasanEl.appendChild(span);
       }
 
-      // Ganti newline dengan <br> untuk pembahasan & keputusan
-      const pembahasanFormatted = (item.pembahasan || '').replace(/\n/g, '<br>');
-      const keputusanFormatted = (item.keputusan || '').replace(/\n/g, '<br>');
+      // Keputusan
+      const keputusanLines = textToList(item.keputusan);
+      const keputusanEl = document.createElement('div');
+      keputusanEl.className = 'field';
+      keputusanEl.innerHTML = '<strong>✅ Keputusan</strong>';
+      if (keputusanLines) {
+        keputusanEl.appendChild(renderListItems(keputusanLines));
+      } else {
+        const span = document.createElement('span');
+        span.className = 'empty-field';
+        span.textContent = '-';
+        keputusanEl.appendChild(span);
+      }
+
+      // Tindak Lanjut
+      const tlEl = document.createElement('div');
+      tlEl.className = 'field';
+      tlEl.innerHTML = '<strong>📌 Tindak Lanjut</strong>';
+      if (item.tindakLanjut && item.tindakLanjut.length > 0) {
+        const ul = document.createElement('ul');
+        item.tindakLanjut.forEach(t => {
+          const li = document.createElement('li');
+          li.textContent = t;
+          ul.appendChild(li);
+        });
+        tlEl.appendChild(ul);
+      } else {
+        const span = document.createElement('span');
+        span.className = 'empty-field';
+        span.textContent = '-';
+        tlEl.appendChild(span);
+      }
 
       card.innerHTML = `
         <div class="title">${item.judul}</div>
@@ -782,21 +879,11 @@
           <span>${item.tanggal}</span>
           <span class="status">${item.status}</span>
         </div>
-        <div class="field">
-          <strong>📌 Pembahasan</strong>
-          <div class="value">${pembahasanFormatted || '<span class="empty-field">-</span>'}</div>
-        </div>
-        <div class="field">
-          <strong>✅ Keputusan</strong>
-          <div class="value">${keputusanFormatted || '<span class="empty-field">-</span>'}</div>
-        </div>
-        <div class="field">
-          <strong>📌 Tindak Lanjut</strong>
-          <div class="value">${tlHtml}</div>
-        </div>
       `;
+      card.appendChild(pembahasanEl);
+      card.appendChild(keputusanEl);
+      card.appendChild(tlEl);
 
-      // Klik kartu untuk membuka modal detail (tetap)
       card.addEventListener('click', () => openDetail(item.id));
       grid.appendChild(card);
     });
@@ -832,7 +919,7 @@
   });
 
   // ============================================================
-  //  MODAL DETAIL (sama)
+  //  MODAL DETAIL (menggunakan fungsi yang sama)
   // ============================================================
   const modal = document.getElementById('modalDetail');
   const modalTitle = document.getElementById('modalTitle');
@@ -849,9 +936,27 @@
 
     modalTitle.textContent = item.judul;
     modalMeta.textContent = `${item.tanggal} · ${item.status}`;
-    modalPembahasan.textContent = item.pembahasan || '-';
-    modalKeputusan.textContent = item.keputusan || '-';
 
+    // Pembahasan
+    modalPembahasan.innerHTML = '';
+    const pLines = textToList(item.pembahasan);
+    if (pLines) {
+      modalPembahasan.appendChild(renderListItems(pLines));
+    } else {
+      modalPembahasan.innerHTML = '<span class="empty-field">-</span>';
+    }
+
+    // Keputusan
+    modalKeputusan.innerHTML = '';
+    const kLines = textToList(item.keputusan);
+    if (kLines) {
+      modalKeputusan.appendChild(renderListItems(kLines));
+    } else {
+      modalKeputusan.innerHTML = '<span class="empty-field">-</span>';
+    }
+
+    // Tindak Lanjut
+    modalTindakLanjut.innerHTML = '';
     if (item.tindakLanjut && item.tindakLanjut.length > 0) {
       const ul = document.createElement('ul');
       item.tindakLanjut.forEach(t => {
@@ -859,11 +964,11 @@
         li.textContent = t;
         ul.appendChild(li);
       });
-      modalTindakLanjut.innerHTML = '';
       modalTindakLanjut.appendChild(ul);
     } else {
       modalTindakLanjut.innerHTML = '<p>Tidak ada tindak lanjut.</p>';
     }
+
     modal.classList.add('active');
   }
 
