@@ -1,719 +1,591 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard & Admin Notulen Rapat</title>
-  <style>
-    * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; }
-    body { background:#f4f7fc; padding:20px; }
-    .container { max-width:1200px; margin:0 auto; }
-    .tab-nav { display:flex; gap:12px; margin-bottom:25px; border-bottom:2px solid #dce5ef; padding-bottom:8px; }
-    .tab-nav button { padding:10px 24px; border:none; background:transparent; font-size:16px; font-weight:600; color:#5a7a9a; cursor:pointer; border-radius:8px 8px 0 0; transition:0.2s; }
-    .tab-nav button:hover { background:#e9f0f9; color:#1a3b5d; }
-    .tab-nav button.active { background:#2a7de1; color:white; box-shadow:0 -2px 6px rgba(42,125,225,0.15); }
-    .tab-content { display:none; animation:fade 0.25s ease; }
-    .tab-content.active { display:block; }
-    @keyframes fade { from { opacity:0.4; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
-    .filters { display:flex; flex-wrap:wrap; gap:15px; background:white; padding:15px 20px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.06); margin-bottom:30px; }
-    .filters input, .filters button { padding:10px 14px; border:1px solid #d0dbe6; border-radius:8px; font-size:14px; background:white; }
-    .filters input:focus { border-color:#2a7de1; outline:none; box-shadow:0 0 0 3px rgba(42,125,225,0.15); }
-    .filters button { background:#2a7de1; color:white; border:none; cursor:pointer; font-weight:600; transition:background 0.2s; }
-    .filters button:hover { background:#1a5fb0; }
-    .filter-group { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-    .filter-group label { font-weight:500; color:#1a3b5d; }
-    .notulen-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:24px; }
-    .card { background:white; border-radius:16px; padding:20px; box-shadow:0 4px 12px rgba(0,0,0,0.05); transition:transform 0.15s, box-shadow 0.2s; cursor:pointer; border-left:5px solid #2a7de1; display:flex; flex-direction:column; gap:8px; }
-    .card:hover { transform:translateY(-4px); box-shadow:0 8px 20px rgba(0,0,0,0.08); }
-    .card .title { font-size:18px; font-weight:600; color:#1a3b5d; margin-bottom:2px; }
-    .card .meta { display:flex; justify-content:space-between; color:#5a7a9a; font-size:14px; border-bottom:1px solid #eef3f8; padding-bottom:8px; margin-bottom:6px; align-items:center; }
-    .status-dropdown { padding:2px 8px; border-radius:20px; font-size:12px; font-weight:600; border:none; outline:none; cursor:pointer; background:#e9f0f9; color:#1a3b5d; transition:background 0.2s; font-family:inherit; appearance:auto; -webkit-appearance:auto; min-width:80px; text-align:center; }
-    .status-dropdown.status-berjalan { background:#e9f0f9; color:#1a3b5d; }
-    .status-dropdown.status-selesai { background:#c8e6c9; color:#2e7d32; }
-    .status-dropdown.status-batal { background:#f8d7da; color:#a71d2a; }
-    .status-dropdown:hover { filter:brightness(0.95); }
-    .card .field { font-size:14px; color:#2d4a6a; line-height:1.5; }
-    .card .field strong { color:#1a3b5d; font-weight:600; display:block; margin-bottom:2px; }
-    .card .field ul { padding-left:20px; margin:4px 0; }
-    .card .field ul li { margin-bottom:2px; }
-    .card .empty-field { color:#9bb0c4; font-style:italic; }
-    .modal-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.4); backdrop-filter:blur(3px); justify-content:center; align-items:center; z-index:999; }
-    .modal-overlay.active { display:flex; }
-    .modal { background:white; max-width:700px; width:90%; max-height:90vh; overflow-y:auto; border-radius:20px; padding:30px; box-shadow:0 20px 60px rgba(0,0,0,0.2); position:relative; }
-    .modal .close-btn { position:absolute; top:16px; right:20px; font-size:28px; background:none; border:none; cursor:pointer; color:#7f9bb3; }
-    .modal .close-btn:hover { color:#1a3b5d; }
-    .modal h2 { font-size:24px; color:#1a3b5d; margin-bottom:4px; }
-    .modal .sub { color:#5a7a9a; margin-bottom:20px; font-size:14px; }
-    .modal .detail-section { margin-bottom:18px; }
-    .modal .detail-section h4 { font-size:16px; color:#1a3b5d; margin-bottom:6px; border-bottom:1px solid #eef3f8; padding-bottom:4px; }
-    .modal .detail-section ul { padding-left:20px; margin:6px 0; }
-    .modal .detail-section ul li { margin-bottom:4px; }
-    .modal .detail-section p { color:#2d4a6a; line-height:1.6; }
-    .modal .tindak-lanjut { background:#f4f9ff; padding:12px 16px; border-radius:10px; margin-top:6px; }
-    .modal .tindak-lanjut ul { padding-left:20px; }
-    .modal .tindak-lanjut li { margin-bottom:4px; }
-    .empty { text-align:center; color:#5a7a9a; padding:40px; grid-column:1/-1; }
-    .admin-container { display:grid; grid-template-columns:1fr 1.5fr; gap:30px; }
-    @media (max-width:850px) { .admin-container { grid-template-columns:1fr; } }
-    .admin-form { background:white; padding:24px; border-radius:16px; box-shadow:0 2px 10px rgba(0,0,0,0.04); }
-    .admin-form h3 { font-size:20px; color:#1a3b5d; margin-bottom:18px; border-bottom:2px solid #eef3f8; padding-bottom:10px; }
-    .form-group { margin-bottom:16px; }
-    .form-group label { display:block; font-weight:600; color:#1a3b5d; margin-bottom:4px; font-size:14px; }
-    .form-group input, .form-group select, .form-group textarea { width:100%; padding:10px 12px; border:1px solid #d0dbe6; border-radius:8px; font-size:14px; transition:0.2s; background:#fafcfd; }
-    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color:#2a7de1; outline:none; box-shadow:0 0 0 3px rgba(42,125,225,0.1); background:white; }
-    .form-group textarea { min-height:60px; resize:vertical; }
-    .form-actions { display:flex; gap:12px; margin-top:8px; flex-wrap:wrap; }
-    .form-actions button { padding:10px 24px; border:none; border-radius:8px; font-weight:600; font-size:14px; cursor:pointer; transition:0.2s; }
-    .btn-primary { background:#2a7de1; color:white; }
-    .btn-primary:hover { background:#1a5fb0; }
-    .btn-secondary { background:#e9f0f9; color:#1a3b5d; }
-    .btn-secondary:hover { background:#d0dbe6; }
-    .admin-list { background:white; padding:20px; border-radius:16px; box-shadow:0 2px 10px rgba(0,0,0,0.04); max-height:600px; overflow-y:auto; }
-    .admin-list h3 { font-size:20px; color:#1a3b5d; margin-bottom:18px; border-bottom:2px solid #eef3f8; padding-bottom:10px; }
-    .admin-item { display:flex; justify-content:space-between; align-items:center; padding:12px 14px; border-radius:10px; background:#f8fafd; margin-bottom:10px; border-left:4px solid #2a7de1; transition:0.15s; }
-    .admin-item:hover { background:#eef4fa; }
-    .admin-item .info { flex:1; }
-    .admin-item .info .judul { font-weight:600; color:#1a3b5d; }
-    .admin-item .info .tanggal { font-size:13px; color:#5a7a9a; margin-left:12px; }
-    .admin-item .info .status-badge { font-size:12px; background:#dce5ef; padding:2px 10px; border-radius:20px; margin-left:10px; }
-    .admin-item .actions { display:flex; gap:8px; }
-    .admin-item .actions button { border:none; background:transparent; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:600; font-size:13px; transition:0.15s; }
-    .admin-item .actions .edit-btn { color:#2a7de1; background:#e3edfa; }
-    .admin-item .actions .edit-btn:hover { background:#c7dbf5; }
-    .admin-item .actions .delete-btn { color:#c0392b; background:#fde8e8; }
-    .admin-item .actions .delete-btn:hover { background:#f8d0d0; }
-    .admin-empty { text-align:center; color:#5a7a9a; padding:30px 0; }
-    @media (max-width:600px) { .filters { flex-direction:column; } .filter-group { width:100%; } .filter-group input { flex:1; } .modal { padding:20px; } .tab-nav button { padding:8px 16px; font-size:14px; } .admin-item { flex-wrap:wrap; gap:10px; } .admin-item .actions { width:100%; justify-content:flex-end; } .notulen-grid { grid-template-columns:1fr; } .status-dropdown { min-width:70px; font-size:11px; padding:2px 6px; } }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notulen Rapat</title>
+<style>
+  :root{
+    --paper:#F7F6F2;
+    --panel:#FFFFFF;
+    --ink:#1E2733;
+    --ink-soft:#5A6472;
+    --line:#DDD9CF;
+    --accent:#2C4A6E;
+    --accent-soft:#E7ECF2;
+    --ok:#3F7D5C;
+    --ok-soft:#E4F0EA;
+    --warn:#B8863B;
+    --warn-soft:#F6EEE0;
+    --bad:#A23B3B;
+    --bad-soft:#F4E5E3;
+    --serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--sans);
+    font-size:15px;
+    line-height:1.5;
+  }
+  .app{
+    display:grid;
+    grid-template-columns: 340px 1fr;
+    min-height:100vh;
+  }
+  @media (max-width: 860px){
+    .app{grid-template-columns: 1fr;}
+    .sidebar{border-right:none; border-bottom:1px solid var(--line);}
+  }
+
+  /* Sidebar */
+  .sidebar{
+    border-right:1px solid var(--line);
+    padding:22px 18px;
+    background:var(--panel);
+  }
+  .brand{
+    font-family:var(--serif);
+    font-size:22px;
+    letter-spacing:0.2px;
+    margin:0 0 2px 0;
+  }
+  .brand-sub{
+    color:var(--ink-soft);
+    font-size:12.5px;
+    margin:0 0 18px 0;
+  }
+  .mode-row{
+    display:flex;
+    gap:6px;
+    background:var(--accent-soft);
+    padding:4px;
+    border-radius:8px;
+    margin-bottom:16px;
+  }
+  .mode-btn{
+    flex:1;
+    border:none;
+    background:transparent;
+    padding:7px 0;
+    font-size:13px;
+    font-weight:600;
+    color:var(--accent);
+    border-radius:6px;
+    cursor:pointer;
+  }
+  .mode-btn.active{
+    background:var(--accent);
+    color:#fff;
+  }
+  .new-btn{
+    width:100%;
+    padding:10px 12px;
+    background:var(--accent);
+    color:#fff;
+    border:none;
+    border-radius:8px;
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+    margin-bottom:16px;
+  }
+  .new-btn:hover{background:#233a58;}
+  .filter-row{
+    display:flex;
+    gap:6px;
+    flex-wrap:wrap;
+    margin-bottom:14px;
+  }
+  .chip{
+    border:1px solid var(--line);
+    background:transparent;
+    padding:4px 10px;
+    border-radius:20px;
+    font-size:12px;
+    color:var(--ink-soft);
+    cursor:pointer;
+  }
+  .chip.active{
+    border-color:var(--accent);
+    color:var(--accent);
+    background:var(--accent-soft);
+    font-weight:600;
+  }
+  .list{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    max-height: calc(100vh - 240px);
+    overflow-y:auto;
+  }
+  .item{
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:11px 12px;
+    cursor:pointer;
+    background:var(--panel);
+  }
+  .item:hover{border-color:var(--accent);}
+  .item.selected{
+    border-color:var(--accent);
+    background:var(--accent-soft);
+  }
+  .item-title{
+    font-weight:600;
+    font-size:14px;
+    margin-bottom:3px;
+  }
+  .item-meta{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    font-size:12px;
+    color:var(--ink-soft);
+  }
+  .status-tag{
+    font-size:11px;
+    font-weight:700;
+    padding:2px 8px;
+    border-radius:20px;
+  }
+  .status-selesai{background:var(--ok-soft); color:var(--ok);}
+  .status-berjalan{background:var(--warn-soft); color:var(--warn);}
+  .status-batal{background:var(--bad-soft); color:var(--bad);}
+  .empty-list{
+    color:var(--ink-soft);
+    font-size:13px;
+    padding:20px 4px;
+  }
+
+  /* Main */
+  .main{
+    padding:32px 40px;
+    max-width:760px;
+  }
+  .main-empty{
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    justify-content:center;
+    min-height:60vh;
+    color:var(--ink-soft);
+  }
+  .main-empty h2{
+    font-family:var(--serif);
+    color:var(--ink);
+    font-weight:normal;
+  }
+  .doc-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:16px;
+    border-bottom:1px solid var(--line);
+    padding-bottom:16px;
+    margin-bottom:22px;
+  }
+  .doc-title{
+    font-family:var(--serif);
+    font-size:28px;
+    margin:0 0 8px 0;
+    line-height:1.25;
+  }
+  .doc-date{
+    color:var(--ink-soft);
+    font-size:13.5px;
+  }
+  .field-group{margin-bottom:20px;}
+  .field-label{
+    font-size:12.5px;
+    color:var(--ink-soft);
+    font-weight:600;
+    margin-bottom:6px;
+  }
+  .field-view{
+    white-space:pre-wrap;
+    font-size:14.5px;
+    line-height:1.6;
+    color:var(--ink);
+  }
+  .field-view.placeholder{
+    color:var(--ink-soft);
+    font-style:italic;
+  }
+  input[type=text], input[type=date], textarea, select{
+    width:100%;
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:9px 11px;
+    font-family:var(--sans);
+    font-size:14.5px;
+    color:var(--ink);
+    background:#fff;
+  }
+  textarea{resize:vertical; min-height:80px;}
+  input:focus, textarea:focus, select:focus{
+    outline:2px solid var(--accent);
+    outline-offset:1px;
+  }
+  .status-select{
+    display:inline-block;
+    width:auto;
+    min-width:150px;
+    font-weight:600;
+    cursor:pointer;
+  }
+  .row-actions{
+    display:flex;
+    gap:10px;
+    margin-top:26px;
+    border-top:1px solid var(--line);
+    padding-top:18px;
+  }
+  .btn{
+    padding:9px 16px;
+    border-radius:8px;
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+    border:1px solid var(--line);
+    background:#fff;
+    color:var(--ink);
+  }
+  .btn-primary{
+    background:var(--accent);
+    border-color:var(--accent);
+    color:#fff;
+  }
+  .btn-primary:hover{background:#233a58;}
+  .btn-danger{
+    color:var(--bad);
+    border-color:var(--bad);
+    background:#fff;
+  }
+  .btn-danger:hover{background:var(--bad-soft);}
+  .save-toast{
+    position:fixed;
+    bottom:22px;
+    right:22px;
+    background:var(--ink);
+    color:#fff;
+    padding:10px 16px;
+    border-radius:8px;
+    font-size:13px;
+    opacity:0;
+    transform:translateY(6px);
+    transition:opacity .25s, transform .25s;
+    pointer-events:none;
+  }
+  .save-toast.show{opacity:1; transform:translateY(0);}
+  .status-pill-inline{
+    font-size:11.5px;
+    font-weight:700;
+    padding:3px 10px;
+    border-radius:20px;
+    display:inline-block;
+  }
+  .viewer-note{
+    font-size:12px;
+    color:var(--ink-soft);
+    margin-top:2px;
+  }
+</style>
 </head>
 <body>
-<div class="container">
+<div class="app">
+  <div class="sidebar">
+    <p class="brand">Notulen Rapat</p>
+    <p class="brand-sub" id="syncLabel">Memuat data&hellip;</p>
 
-  <h1 style="font-size:28px; color:#1a3b5d; margin-bottom:8px;">
-    📋 Notulen Rapat
-  </h1>
-
-  <div class="tab-nav">
-    <button class="active" data-tab="dashboard">📊 Lihat Notulen</button>
-    <button data-tab="admin">⚙️ Admin Panel</button>
-  </div>
-
-  <!-- ===== TAB 1: DASHBOARD ===== -->
-  <div id="tab-dashboard" class="tab-content active">
-    <div class="filters">
-      <div class="filter-group">
-        <label for="search">🔍 Cari</label>
-        <input type="text" id="search" placeholder="Judul atau pembahasan..." />
-      </div>
-      <div class="filter-group">
-        <label for="dateFrom">Dari</label>
-        <input type="date" id="dateFrom" />
-      </div>
-      <div class="filter-group">
-        <label for="dateTo">Sampai</label>
-        <input type="date" id="dateTo" />
-      </div>
-      <button id="resetBtn">↺ Reset</button>
+    <div class="mode-row">
+      <button class="mode-btn active" id="btnStaf" onclick="setMode('staf')">Staf</button>
+      <button class="mode-btn" id="btnAdmin" onclick="setMode('admin')">Admin</button>
     </div>
-    <div id="notulenGrid" class="notulen-grid"></div>
+
+    <button class="new-btn" id="btnNew" style="display:none" onclick="newRapat()">+ Rapat Baru</button>
+
+    <div class="filter-row">
+      <button class="chip active" data-status="semua" onclick="setFilter('semua')">Semua</button>
+      <button class="chip" data-status="berjalan" onclick="setFilter('berjalan')">Berjalan</button>
+      <button class="chip" data-status="selesai" onclick="setFilter('selesai')">Selesai</button>
+      <button class="chip" data-status="batal" onclick="setFilter('batal')">Batal</button>
+    </div>
+
+    <div class="list" id="list"></div>
   </div>
 
-  <!-- ===== TAB 2: ADMIN PANEL ===== -->
-  <div id="tab-admin" class="tab-content">
-    <div class="admin-container">
-      <div class="admin-form">
-        <h3 id="formTitle">✏️ Tambah Notulen Baru</h3>
-        <form id="adminForm">
-          <div class="form-group">
-            <label for="f_judul">Judul Rapat *</label>
-            <input type="text" id="f_judul" placeholder="Contoh: Rapat Evaluasi Q1" required />
-          </div>
-          <div class="form-group">
-            <label for="f_tanggal">Tanggal *</label>
-            <input type="date" id="f_tanggal" required />
-          </div>
-          <div class="form-group">
-            <label for="f_status">Status</label>
-            <select id="f_status">
-              <option value="Berjalan">Berjalan</option>
-              <option value="Selesai">Selesai</option>
-              <option value="Batal">Batal</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="f_pembahasan">Agenda / Pembahasan</label>
-            <textarea id="f_pembahasan" rows="3" placeholder="Tulis setiap poin di baris baru"></textarea>
-          </div>
-          <div class="form-group">
-            <label for="f_keputusan">Keputusan</label>
-            <textarea id="f_keputusan" rows="2" placeholder="Tulis setiap poin di baris baru"></textarea>
-          </div>
-          <div class="form-group">
-            <label for="f_tindaklanjut">Tindak Lanjut (pisahkan dengan baris baru)</label>
-            <textarea id="f_tindaklanjut" rows="3" placeholder="Contoh:&#10;- Rekrutmen selesai 1 Feb&#10;- Update roadmap"></textarea>
-          </div>
-          <div class="form-actions">
-            <button type="submit" class="btn-primary" id="submitBtn">Simpan Notulen</button>
-            <button type="button" class="btn-secondary" id="cancelEditBtn" style="display:none;">Batal Edit</button>
-          </div>
-        </form>
-      </div>
-
-      <div class="admin-list">
-        <h3>📌 Daftar Notulen</h3>
-        <div id="adminListContainer"></div>
-      </div>
+  <div class="main" id="main">
+    <div class="main-empty">
+      <h2>Belum ada rapat dipilih</h2>
+      <p>Pilih rapat dari daftar di sebelah kiri, atau klik "+ Rapat Baru" jika masuk sebagai Admin.</p>
     </div>
   </div>
 </div>
 
-<!-- ===== MODAL DETAIL ===== -->
-<div id="modalDetail" class="modal-overlay">
-  <div class="modal">
-    <button class="close-btn" id="closeModal">&times;</button>
-    <h2 id="modalTitle">Judul Rapat</h2>
-    <div class="sub" id="modalMeta">Tanggal · Status</div>
-    <div class="detail-section">
-      <h4>📌 Agenda / Pembahasan</h4>
-      <div id="modalPembahasan"></div>
-    </div>
-    <div class="detail-section">
-      <h4>✅ Keputusan</h4>
-      <div id="modalKeputusan"></div>
-    </div>
-    <div class="detail-section">
-      <h4>📌 Tindak Lanjut</h4>
-      <div id="modalTindakLanjut" class="tindak-lanjut"></div>
-    </div>
-  </div>
-</div>
+<div class="save-toast" id="toast">Tersimpan</div>
 
 <script>
-  // ============================================================
-  //  API BASE URL — GANTI DENGAN URL WEB APP ANDA
-  // ============================================================
-  const API_BASE = 'https://script.google.com/macros/s/AKfycbzQNWXvqPJZRm2TDMlaBf6QJXCOMMA8eujG1tFZHjsUsEIRo8btSFc_yWYCLlN7ynTo3Q/exec';
+let mode = 'staf'; // 'staf' | 'admin'
+let filterStatus = 'semua';
+let rapatData = {}; // id -> object
+let selectedId = null;
+let isEditingNew = false;
+let pollTimer = null;
 
-  // ============================================================
-  //  FUNGSI API — Menggunakan FormData untuk POST (tanpa preflight)
-  // ============================================================
+const STATUS_LABEL = { berjalan: 'Berjalan', selesai: 'Selesai', batal: 'Batal' };
 
-  async function fetchNotulen() {
-    const res = await fetch(API_BASE, {
-      method: 'GET',
-      mode: 'cors'
-    });
-    if (!res.ok) throw new Error('Gagal mengambil data (HTTP ' + res.status + ')');
-    const data = await res.json();
-    // Jika data adalah array, return langsung
-    if (Array.isArray(data)) {
-      return data;
+function uid(){
+  return 'r' + Date.now() + Math.random().toString(16).slice(2,8);
+}
+
+function fmtDate(iso){
+  if(!iso) return '(tanggal belum diisi)';
+  const d = new Date(iso + 'T00:00:00');
+  if(isNaN(d)) return iso;
+  return d.toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' });
+}
+
+async function loadAll(){
+  try{
+    const res = await window.storage.list('rapat:', true);
+    const keys = (res && res.keys) || [];
+    const entries = await Promise.all(keys.map(async k => {
+      try{
+        const r = await window.storage.get(k, true);
+        return r ? JSON.parse(r.value) : null;
+      }catch(e){ return null; }
+    }));
+    const newData = {};
+    entries.filter(Boolean).forEach(item => { newData[item.id] = item; });
+    rapatData = newData;
+    renderList();
+    if(selectedId && rapatData[selectedId] && !isEditingNew){
+      renderMain();
     }
-    // Jika data adalah object dengan properti success: false (error dari server)
-    if (data && typeof data === 'object' && data.success === false) {
-      throw new Error(data.error || 'Terjadi kesalahan server');
-    }
-    // Jika tidak ada yang cocok, return array kosong
-    console.warn('Response bukan array:', data);
-    return [];
+    document.getElementById('syncLabel').textContent = 'Tersinkron \u2022 terlihat semua staf';
+  }catch(e){
+    document.getElementById('syncLabel').textContent = 'Gagal memuat data';
+    console.error(e);
+  }
+}
+
+async function saveRapat(item){
+  await window.storage.set('rapat:' + item.id, JSON.stringify(item), true);
+  rapatData[item.id] = item;
+  showToast('Tersimpan');
+  renderList();
+}
+
+async function deleteRapat(id){
+  await window.storage.delete('rapat:' + id, true);
+  delete rapatData[id];
+  selectedId = null;
+  renderList();
+  renderMain();
+}
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+function setMode(m){
+  mode = m;
+  document.getElementById('btnStaf').classList.toggle('active', m==='staf');
+  document.getElementById('btnAdmin').classList.toggle('active', m==='admin');
+  document.getElementById('btnNew').style.display = (m==='admin') ? 'block' : 'none';
+  isEditingNew = false;
+  renderMain();
+}
+
+function setFilter(s){
+  filterStatus = s;
+  document.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.dataset.status === s));
+  renderList();
+}
+
+function renderList(){
+  const list = document.getElementById('list');
+  let items = Object.values(rapatData);
+  if(filterStatus !== 'semua'){
+    items = items.filter(r => r.status === filterStatus);
+  }
+  items.sort((a,b) => (b.tanggal || '').localeCompare(a.tanggal || '') || (b.createdAt||0) - (a.createdAt||0));
+
+  if(items.length === 0){
+    list.innerHTML = '<div class="empty-list">Tidak ada rapat pada kategori ini.</div>';
+    return;
   }
 
-  async function postAction(action, data) {
-    const formData = new FormData();
-    formData.append('action', action);
-    Object.keys(data).forEach(key => {
-      if (data[key] !== undefined && data[key] !== null) {
-        if (Array.isArray(data[key])) {
-          formData.append(key, data[key].join('\n'));
-        } else {
-          formData.append(key, data[key]);
-        }
-      }
-    });
-
-    const res = await fetch(API_BASE, {
-      method: 'POST',
-      mode: 'cors',
-      body: formData
-    });
-    if (!res.ok) throw new Error('Gagal melakukan aksi (HTTP ' + res.status + ')');
-    const result = await res.json();
-    if (result && typeof result === 'object' && result.success === false) {
-      throw new Error(result.error || 'Terjadi kesalahan server');
-    }
-    return result;
-  }
-
-  async function addNotulen(data) {
-    return postAction('add', data);
-  }
-
-  async function updateNotulen(id, data) {
-    return postAction('update', { id, ...data });
-  }
-
-  async function updateStatus(id, status) {
-    return postAction('updateStatus', { id, status });
-  }
-
-  async function deleteNotulen(id) {
-    return postAction('delete', { id });
-  }
-
-  // ============================================================
-  //  FUNGSI BANTU
-  // ============================================================
-
-  function textToList(text) {
-    if (!text || text.trim() === '') return null;
-    const lines = text.split('\n').map(s => s.trim()).filter(s => s !== '');
-    return lines.length > 0 ? lines : null;
-  }
-
-  function renderListItems(lines) {
-    if (!lines || lines.length === 0) return null;
-    const ul = document.createElement('ul');
-    lines.forEach(line => {
-      const li = document.createElement('li');
-      li.textContent = line;
-      ul.appendChild(li);
-    });
-    return ul;
-  }
-
-  function renderFieldContent(text) {
-    const lines = textToList(text);
-    if (!lines) {
-      const span = document.createElement('span');
-      span.className = 'empty-field';
-      span.textContent = '-';
-      return span;
-    }
-    return renderListItems(lines);
-  }
-
-  // ============================================================
-  //  RENDER DASHBOARD
-  // ============================================================
-
-  const grid = document.getElementById('notulenGrid');
-  const searchInput = document.getElementById('search');
-  const dateFrom = document.getElementById('dateFrom');
-  const dateTo = document.getElementById('dateTo');
-  const resetBtn = document.getElementById('resetBtn');
-
-  let allData = [];
-
-  async function loadData() {
-    try {
-      allData = await fetchNotulen();
-      filterNotulen();
-    } catch (err) {
-      alert('Gagal memuat data: ' + err.message);
-      allData = [];
-      filterNotulen();
-    }
-  }
-
-  function renderNotulen(data) {
-    grid.innerHTML = '';
-    if (!data || data.length === 0) {
-      grid.innerHTML = '<div class="empty">Tidak ada notulen yang ditemukan.</div>';
-      return;
-    }
-
-    data.forEach(item => {
-      const card = document.createElement('div');
-      card.className = 'card';
-      card.dataset.id = item.id;
-
-      // Pembahasan
-      const pembahasanLines = textToList(item.pembahasan);
-      const pembahasanEl = document.createElement('div');
-      pembahasanEl.className = 'field';
-      pembahasanEl.innerHTML = '<strong>📌 Pembahasan</strong>';
-      if (pembahasanLines) {
-        pembahasanEl.appendChild(renderListItems(pembahasanLines));
-      } else {
-        const span = document.createElement('span');
-        span.className = 'empty-field';
-        span.textContent = '-';
-        pembahasanEl.appendChild(span);
-      }
-
-      // Keputusan
-      const keputusanLines = textToList(item.keputusan);
-      const keputusanEl = document.createElement('div');
-      keputusanEl.className = 'field';
-      keputusanEl.innerHTML = '<strong>✅ Keputusan</strong>';
-      if (keputusanLines) {
-        keputusanEl.appendChild(renderListItems(keputusanLines));
-      } else {
-        const span = document.createElement('span');
-        span.className = 'empty-field';
-        span.textContent = '-';
-        keputusanEl.appendChild(span);
-      }
-
-      // Tindak Lanjut
-      const tlEl = document.createElement('div');
-      tlEl.className = 'field';
-      tlEl.innerHTML = '<strong>📌 Tindak Lanjut</strong>';
-      if (item.tindakLanjut && item.tindakLanjut.length > 0) {
-        const ul = document.createElement('ul');
-        item.tindakLanjut.forEach(t => {
-          const li = document.createElement('li');
-          li.textContent = t;
-          ul.appendChild(li);
-        });
-        tlEl.appendChild(ul);
-      } else {
-        const span = document.createElement('span');
-        span.className = 'empty-field';
-        span.textContent = '-';
-        tlEl.appendChild(span);
-      }
-
-      // === DROPDOWN STATUS ===
-      const statusSelect = document.createElement('select');
-      statusSelect.className = 'status-dropdown';
-      const statusClass = item.status === 'Selesai' ? 'status-selesai' :
-                          item.status === 'Batal' ? 'status-batal' : 'status-berjalan';
-      statusSelect.classList.add(statusClass);
-
-      const statusOptions = ['Berjalan', 'Selesai', 'Batal'];
-      statusOptions.forEach(opt => {
-        const option = document.createElement('option');
-        option.value = opt;
-        option.textContent = opt;
-        if (opt === item.status) {
-          option.selected = true;
-        }
-        statusSelect.appendChild(option);
-      });
-
-      statusSelect.addEventListener('change', async function(e) {
-        e.stopPropagation();
-        const newStatus = this.value;
-        try {
-          await updateStatus(item.id, newStatus);
-          this.className = 'status-dropdown';
-          const newClass = newStatus === 'Selesai' ? 'status-selesai' :
-                           newStatus === 'Batal' ? 'status-batal' : 'status-berjalan';
-          this.classList.add(newClass);
-          await loadData();
-        } catch (err) {
-          alert('Gagal update status: ' + err.message);
-          this.value = item.status;
-        }
-      });
-
-      statusSelect.addEventListener('click', function(e) {
-        e.stopPropagation();
-      });
-
-      // === META ===
-      const metaDiv = document.createElement('div');
-      metaDiv.className = 'meta';
-      const dateSpan = document.createElement('span');
-      dateSpan.textContent = item.tanggal;
-      metaDiv.appendChild(dateSpan);
-      metaDiv.appendChild(statusSelect);
-
-      // === TITLE ===
-      const titleDiv = document.createElement('div');
-      titleDiv.className = 'title';
-      titleDiv.textContent = item.judul;
-
-      // Susun kartu
-      card.appendChild(titleDiv);
-      card.appendChild(metaDiv);
-      card.appendChild(pembahasanEl);
-      card.appendChild(keputusanEl);
-      card.appendChild(tlEl);
-
-      card.addEventListener('click', (e) => {
-        if (e.target.tagName === 'SELECT') return;
-        openDetail(item.id);
-      });
-
-      grid.appendChild(card);
-    });
-  }
-
-  function filterNotulen() {
-    const keyword = searchInput.value.toLowerCase().trim();
-    const from = dateFrom.value;
-    const to = dateTo.value;
-
-    const filtered = allData.filter(item => {
-      if (keyword) {
-        const matchJudul = item.judul.toLowerCase().includes(keyword);
-        const matchPembahasan = (item.pembahasan || '').toLowerCase().includes(keyword);
-        if (!matchJudul && !matchPembahasan) return false;
-      }
-      if (from && item.tanggal < from) return false;
-      if (to && item.tanggal > to) return false;
-      return true;
-    });
-    renderNotulen(filtered);
-  }
-
-  searchInput.addEventListener('input', filterNotulen);
-  dateFrom.addEventListener('change', filterNotulen);
-  dateTo.addEventListener('change', filterNotulen);
-  resetBtn.addEventListener('click', () => {
-    searchInput.value = '';
-    dateFrom.value = '';
-    dateTo.value = '';
-    filterNotulen();
+  list.innerHTML = '';
+  items.forEach(r => {
+    const div = document.createElement('div');
+    div.className = 'item' + (r.id === selectedId ? ' selected' : '');
+    div.onclick = () => { isEditingNew = false; selectedId = r.id; renderList(); renderMain(); };
+    div.innerHTML = `
+      <div class="item-title">${escapeHtml(r.judul || '(tanpa judul)')}</div>
+      <div class="item-meta">
+        <span>${fmtDate(r.tanggal)}</span>
+        <span class="status-tag status-${r.status}">${STATUS_LABEL[r.status] || r.status}</span>
+      </div>
+    `;
+    list.appendChild(div);
   });
+}
 
-  // ============================================================
-  //  MODAL DETAIL
-  // ============================================================
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
 
-  const modal = document.getElementById('modalDetail');
-  const modalTitle = document.getElementById('modalTitle');
-  const modalMeta = document.getElementById('modalMeta');
-  const modalPembahasan = document.getElementById('modalPembahasan');
-  const modalKeputusan = document.getElementById('modalKeputusan');
-  const modalTindakLanjut = document.getElementById('modalTindakLanjut');
-  const closeModalBtn = document.getElementById('closeModal');
+function newRapat(){
+  selectedId = null;
+  isEditingNew = true;
+  renderMain();
+}
 
-  function openDetail(id) {
-    const item = allData.find(d => d.id === id);
-    if (!item) return;
+function renderMain(){
+  const main = document.getElementById('main');
 
-    modalTitle.textContent = item.judul;
-    modalMeta.textContent = `${item.tanggal} · ${item.status}`;
-
-    modalPembahasan.innerHTML = '';
-    const pLines = textToList(item.pembahasan);
-    if (pLines) {
-      modalPembahasan.appendChild(renderListItems(pLines));
-    } else {
-      modalPembahasan.innerHTML = '<span class="empty-field">-</span>';
-    }
-
-    modalKeputusan.innerHTML = '';
-    const kLines = textToList(item.keputusan);
-    if (kLines) {
-      modalKeputusan.appendChild(renderListItems(kLines));
-    } else {
-      modalKeputusan.innerHTML = '<span class="empty-field">-</span>';
-    }
-
-    modalTindakLanjut.innerHTML = '';
-    if (item.tindakLanjut && item.tindakLanjut.length > 0) {
-      const ul = document.createElement('ul');
-      item.tindakLanjut.forEach(t => {
-        const li = document.createElement('li');
-        li.textContent = t;
-        ul.appendChild(li);
-      });
-      modalTindakLanjut.appendChild(ul);
-    } else {
-      modalTindakLanjut.innerHTML = '<p>Tidak ada tindak lanjut.</p>';
-    }
-
-    modal.classList.add('active');
+  if(isEditingNew){
+    renderForm(main, {
+      id: uid(), tanggal:'', judul:'', pembahasan:'', tindakLanjut:'', hasilTindakLanjut:'', status:'berjalan', createdAt: Date.now()
+    }, true);
+    return;
   }
 
-  function closeModal() {
-    modal.classList.remove('active');
+  const r = selectedId ? rapatData[selectedId] : null;
+  if(!r){
+    main.innerHTML = `
+      <div class="main-empty">
+        <h2>Belum ada rapat dipilih</h2>
+        <p>Pilih rapat dari daftar di sebelah kiri${mode==='admin' ? ', atau klik "+ Rapat Baru".' : '.'}</p>
+      </div>`;
+    return;
   }
 
-  closeModalBtn.addEventListener('click', closeModal);
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) closeModal();
-  });
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeModal();
-  });
-
-  // ============================================================
-  //  ADMIN PANEL
-  // ============================================================
-
-  let editingId = null;
-
-  const adminForm = document.getElementById('adminForm');
-  const f_judul = document.getElementById('f_judul');
-  const f_tanggal = document.getElementById('f_tanggal');
-  const f_status = document.getElementById('f_status');
-  const f_pembahasan = document.getElementById('f_pembahasan');
-  const f_keputusan = document.getElementById('f_keputusan');
-  const f_tindaklanjut = document.getElementById('f_tindaklanjut');
-  const submitBtn = document.getElementById('submitBtn');
-  const cancelEditBtn = document.getElementById('cancelEditBtn');
-  const formTitle = document.getElementById('formTitle');
-  const adminListContainer = document.getElementById('adminListContainer');
-
-  async function renderAdminList() {
-    try {
-      const data = await fetchNotulen();
-      if (!data || data.length === 0) {
-        adminListContainer.innerHTML = '<div class="admin-empty">Belum ada notulen. Tambahkan yang baru!</div>';
-        return;
-      }
-      let html = '';
-      data.forEach(item => {
-        html += `
-          <div class="admin-item">
-            <div class="info">
-              <span class="judul">${item.judul}</span>
-              <span class="tanggal">${item.tanggal}</span>
-              <span class="status-badge">${item.status}</span>
-            </div>
-            <div class="actions">
-              <button class="edit-btn" data-id="${item.id}">✏️ Edit</button>
-              <button class="delete-btn" data-id="${item.id}">🗑️ Hapus</button>
-            </div>
-          </div>
-        `;
-      });
-      adminListContainer.innerHTML = html;
-
-      document.querySelectorAll('.edit-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          const id = parseInt(btn.dataset.id);
-          loadToForm(id);
-        });
-      });
-
-      document.querySelectorAll('.delete-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          const id = parseInt(btn.dataset.id);
-          if (confirm('Yakin ingin menghapus notulen ini?')) {
-            handleDelete(id);
-          }
-        });
-      });
-    } catch (err) {
-      alert('Gagal memuat data admin: ' + err.message);
-      adminListContainer.innerHTML = '<div class="admin-empty">Gagal memuat data. Periksa koneksi atau sheet.</div>';
-    }
+  if(mode === 'admin'){
+    renderForm(main, r, false);
+  } else {
+    renderView(main, r);
   }
+}
 
-  async function handleDelete(id) {
-    try {
-      await deleteNotulen(id);
-      await loadData();
-      await renderAdminList();
-      alert('Notulen berhasil dihapus!');
-    } catch (err) {
-      alert('Gagal menghapus: ' + err.message);
-    }
-  }
+function renderView(main, r){
+  main.innerHTML = `
+    <div class="doc-header">
+      <div>
+        <h1 class="doc-title">${escapeHtml(r.judul || '(tanpa judul)')}</h1>
+        <div class="doc-date">${fmtDate(r.tanggal)}</div>
+      </div>
+      <span class="status-pill-inline status-${r.status}">${STATUS_LABEL[r.status] || r.status}</span>
+    </div>
 
-  function resetForm() {
-    adminForm.reset();
-    editingId = null;
-    submitBtn.textContent = 'Simpan Notulen';
-    formTitle.textContent = '✏️ Tambah Notulen Baru';
-    cancelEditBtn.style.display = 'none';
-    const today = new Date().toISOString().split('T')[0];
-    if (!f_tanggal.value) f_tanggal.value = today;
-  }
+    <div class="field-group">
+      <div class="field-label">Hasil Pembahasan Rapat</div>
+      <div class="field-view ${r.pembahasan ? '' : 'placeholder'}">${escapeHtml(r.pembahasan || 'Belum diisi.')}</div>
+    </div>
 
-  async function loadToForm(id) {
-    try {
-      const data = await fetchNotulen();
-      const item = data.find(d => d.id === id);
-      if (!item) return;
+    <div class="field-group">
+      <div class="field-label">Rencana Tindak Lanjut</div>
+      <div class="field-view ${r.tindakLanjut ? '' : 'placeholder'}">${escapeHtml(r.tindakLanjut || 'Belum diisi.')}</div>
+    </div>
 
-      f_judul.value = item.judul;
-      f_tanggal.value = item.tanggal;
-      f_status.value = item.status;
-      f_pembahasan.value = item.pembahasan || '';
-      f_keputusan.value = item.keputusan || '';
-      f_tindaklanjut.value = (item.tindakLanjut || []).join('\n');
+    <div class="field-group">
+      <div class="field-label">Hasil Tindak Lanjut</div>
+      <div class="field-view ${r.hasilTindakLanjut ? '' : 'placeholder'}">${escapeHtml(r.hasilTindakLanjut || 'Belum diisi.')}</div>
+    </div>
+    <p class="viewer-note">Tampilan staf — hanya lihat. Perubahan dilakukan oleh Admin dan akan tampil otomatis di sini.</p>
+  `;
+}
 
-      editingId = id;
-      submitBtn.textContent = 'Update Notulen';
-      formTitle.textContent = '✏️ Edit Notulen';
-      cancelEditBtn.style.display = 'inline-block';
-    } catch (err) {
-      alert('Gagal memuat data untuk edit: ' + err.message);
-    }
-  }
+function renderForm(main, r, isNew){
+  main.innerHTML = `
+    <div class="field-group">
+      <div class="field-label">Tanggal Rapat</div>
+      <input type="date" id="f_tanggal" value="${r.tanggal || ''}">
+    </div>
 
-  adminForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
+    <div class="field-group">
+      <div class="field-label">Judul Rapat</div>
+      <input type="text" id="f_judul" placeholder="Contoh: Rapat Koordinasi Bulanan" value="${escapeHtml(r.judul || '')}">
+    </div>
 
-    const judul = f_judul.value.trim();
-    const tanggal = f_tanggal.value;
-    const status = f_status.value;
-    const pembahasan = f_pembahasan.value.trim();
-    const keputusan = f_keputusan.value.trim();
-    const tindakLanjutRaw = f_tindaklanjut.value.trim();
-    const tindakLanjut = tindakLanjutRaw ? tindakLanjutRaw.split('\n').map(s => s.trim()).filter(s => s !== '') : [];
+    <div class="field-group">
+      <div class="field-label">Hasil Pembahasan Rapat</div>
+      <textarea id="f_pembahasan" placeholder="Ringkasan poin-poin yang dibahas...">${escapeHtml(r.pembahasan || '')}</textarea>
+    </div>
 
-    if (!judul || !tanggal) {
-      alert('Judul dan Tanggal wajib diisi!');
-      return;
-    }
+    <div class="field-group">
+      <div class="field-label">Rencana Tindak Lanjut</div>
+      <textarea id="f_tindak" placeholder="Apa yang akan dilakukan selanjutnya...">${escapeHtml(r.tindakLanjut || '')}</textarea>
+    </div>
 
-    try {
-      if (editingId !== null) {
-        await updateNotulen(editingId, { judul, tanggal, status, pembahasan, keputusan, tindakLanjut });
-        alert('Notulen berhasil diupdate!');
-      } else {
-        await addNotulen({ judul, tanggal, status, pembahasan, keputusan, tindakLanjut });
-        alert('Notulen berhasil ditambahkan!');
-      }
-      resetForm();
-      await loadData();
-      await renderAdminList();
-    } catch (err) {
-      alert('Gagal menyimpan: ' + err.message);
-    }
-  });
+    <div class="field-group">
+      <div class="field-label">Hasil Tindak Lanjut</div>
+      <textarea id="f_hasil" placeholder="Hasil setelah tindak lanjut dijalankan...">${escapeHtml(r.hasilTindakLanjut || '')}</textarea>
+    </div>
 
-  cancelEditBtn.addEventListener('click', resetForm);
+    <div class="field-group">
+      <div class="field-label">Status</div>
+      <select id="f_status" class="status-select">
+        <option value="berjalan" ${r.status==='berjalan'?'selected':''}>Berjalan</option>
+        <option value="selesai" ${r.status==='selesai'?'selected':''}>Selesai</option>
+        <option value="batal" ${r.status==='batal'?'selected':''}>Batal</option>
+      </select>
+    </div>
 
-  // ============================================================
-  //  TAB SWITCHING
-  // ============================================================
+    <div class="row-actions">
+      <button class="btn btn-primary" onclick="handleSave('${r.id}', ${isNew})">Simpan</button>
+      ${isNew ? '<button class="btn" onclick="cancelNew()">Batal</button>' : '<button class="btn btn-danger" onclick="handleDelete(\''+r.id+'\')">Hapus Rapat</button>'}
+    </div>
+  `;
+}
 
-  const tabButtons = document.querySelectorAll('.tab-nav button');
-  const tabContents = {
-    dashboard: document.getElementById('tab-dashboard'),
-    admin: document.getElementById('tab-admin')
+async function handleSave(id, isNew){
+  const item = {
+    id: id,
+    tanggal: document.getElementById('f_tanggal').value,
+    judul: document.getElementById('f_judul').value.trim(),
+    pembahasan: document.getElementById('f_pembahasan').value,
+    tindakLanjut: document.getElementById('f_tindak').value,
+    hasilTindakLanjut: document.getElementById('f_hasil').value,
+    status: document.getElementById('f_status').value,
+    createdAt: (rapatData[id] && rapatData[id].createdAt) || Date.now()
   };
+  if(!item.judul){
+    showToast('Judul rapat wajib diisi');
+    return;
+  }
+  await saveRapat(item);
+  isEditingNew = false;
+  selectedId = id;
+  renderMain();
+}
 
-  tabButtons.forEach(btn => {
-    btn.addEventListener('click', async () => {
-      tabButtons.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
+function cancelNew(){
+  isEditingNew = false;
+  renderMain();
+}
 
-      const tab = btn.dataset.tab;
-      Object.keys(tabContents).forEach(key => {
-        tabContents[key].classList.toggle('active', key === tab);
-      });
+async function handleDelete(id){
+  if(!confirm('Hapus rapat ini? Tindakan tidak dapat dibatalkan.')) return;
+  await deleteRapat(id);
+}
 
-      if (tab === 'admin') {
-        await renderAdminList();
-        resetForm();
-      }
-      if (tab === 'dashboard') {
-        await loadData();
-      }
-    });
-  });
+async function init(){
+  await loadAll();
+  renderList();
+  renderMain();
+  pollTimer = setInterval(loadAll, 4000);
+}
 
-  // ============================================================
-  //  INIT
-  // ============================================================
-
-  const today = new Date().toISOString().split('T')[0];
-  f_tanggal.value = today;
-
-  loadData();
-  renderAdminList();
+init();
 </script>
 </body>
 </html>
