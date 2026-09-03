@@ -175,6 +175,24 @@
       font-size: 12px;
       font-weight: 600;
       color: #1a3b5d;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      user-select: none;
+    }
+
+    .card .status:hover:not(.status-selesai) {
+      background: #d4e0f0;
+      transform: scale(1.02);
+    }
+
+    .card .status.status-selesai {
+      background: #c8e6c9;
+      color: #2e7d32;
+      cursor: default;
+    }
+
+    .card .status.status-selesai:hover {
+      transform: none;
     }
 
     .card .field {
@@ -670,7 +688,6 @@
   // ============================================================
   const STORAGE_KEY = 'notulenData';
 
-  // Data default (termasuk contoh dari gambar)
   const defaultData = [
     {
       id: 1,
@@ -717,7 +734,6 @@
       keputusan: 'Migrasi ke cloud dilakukan bertahap mulai Maret. Peningkatan autentikasi dua faktor.',
       tindakLanjut: ['Audit keamanan oleh tim eksternal', 'Persiapan infrastruktur untuk migrasi']
     },
-    // Notulen baru sesuai gambar
     {
       id: 6,
       judul: 'Rapat Koordinasi Bulan Agustus 2026 (Depo Terpadu)',
@@ -772,14 +788,6 @@
     if (!text || text.trim() === '') return null;
     const lines = text.split('\n').map(s => s.trim()).filter(s => s !== '');
     if (lines.length === 0) return null;
-    // Jika hanya satu baris, kembalikan sebagai paragraf
-    if (lines.length === 1) {
-      // Cek apakah mengandung pola "1. " atau "- " → tetap buat list
-      if (/^\d+\.\s/.test(lines[0]) || /^[-•]\s/.test(lines[0])) {
-        return lines; // akan di-render sebagai list
-      }
-      return lines; // tetap list dengan 1 item
-    }
     return lines;
   }
 
@@ -806,13 +814,32 @@
   }
 
   // ============================================================
-  //  RENDER DASHBOARD
+  //  RENDER DASHBOARD (dengan fitur klik status)
   // ============================================================
   const grid = document.getElementById('notulenGrid');
   const searchInput = document.getElementById('search');
   const dateFrom = document.getElementById('dateFrom');
   const dateTo = document.getElementById('dateTo');
   const resetBtn = document.getElementById('resetBtn');
+
+  // Fungsi untuk mengubah status (hanya dari non-Selesai ke Selesai)
+  function updateStatusToSelesai(id) {
+    let data = loadData();
+    const item = data.find(d => d.id === id);
+    if (!item) return false;
+    if (item.status === 'Selesai') {
+      alert('Status sudah Selesai.');
+      return false;
+    }
+    // Konfirmasi opsional, bisa dihapus jika ingin langsung
+    if (!confirm(`Ubah status "${item.status}" menjadi "Selesai" untuk notulen "${item.judul}"?`)) {
+      return false;
+    }
+    item.status = 'Selesai';
+    saveData(data);
+    filterNotulen(); // refresh tampilan
+    return true;
+  }
 
   function renderNotulen(data) {
     grid.innerHTML = '';
@@ -873,18 +900,50 @@
         tlEl.appendChild(span);
       }
 
-      card.innerHTML = `
-        <div class="title">${item.judul}</div>
-        <div class="meta">
-          <span>${item.tanggal}</span>
-          <span class="status">${item.status}</span>
-        </div>
-      `;
+      // === BADGE STATUS (bisa diklik) ===
+      const statusSpan = document.createElement('span');
+      statusSpan.className = 'status';
+      if (item.status === 'Selesai') {
+        statusSpan.classList.add('status-selesai');
+      }
+      statusSpan.textContent = item.status;
+      // Event klik pada badge
+      statusSpan.addEventListener('click', function(e) {
+        e.stopPropagation(); // agar tidak membuka modal detail
+        if (item.status === 'Selesai') {
+          alert('Notulen ini sudah berstatus Selesai.');
+          return;
+        }
+        updateStatusToSelesai(item.id);
+      });
+
+      // === META (tanggal + status) ===
+      const metaDiv = document.createElement('div');
+      metaDiv.className = 'meta';
+      const dateSpan = document.createElement('span');
+      dateSpan.textContent = item.tanggal;
+      metaDiv.appendChild(dateSpan);
+      metaDiv.appendChild(statusSpan);
+
+      // === TITLE ===
+      const titleDiv = document.createElement('div');
+      titleDiv.className = 'title';
+      titleDiv.textContent = item.judul;
+
+      // Susun kartu
+      card.appendChild(titleDiv);
+      card.appendChild(metaDiv);
       card.appendChild(pembahasanEl);
       card.appendChild(keputusanEl);
       card.appendChild(tlEl);
 
-      card.addEventListener('click', () => openDetail(item.id));
+      // Klik pada kartu (selain badge) untuk membuka modal
+      card.addEventListener('click', (e) => {
+        // Jika yang diklik adalah badge, sudah di-handle di atas
+        if (e.target.classList.contains('status')) return;
+        openDetail(item.id);
+      });
+
       grid.appendChild(card);
     });
   }
@@ -919,7 +978,7 @@
   });
 
   // ============================================================
-  //  MODAL DETAIL (menggunakan fungsi yang sama)
+  //  MODAL DETAIL (sama)
   // ============================================================
   const modal = document.getElementById('modalDetail');
   const modalTitle = document.getElementById('modalTitle');
@@ -937,7 +996,6 @@
     modalTitle.textContent = item.judul;
     modalMeta.textContent = `${item.tanggal} · ${item.status}`;
 
-    // Pembahasan
     modalPembahasan.innerHTML = '';
     const pLines = textToList(item.pembahasan);
     if (pLines) {
@@ -946,7 +1004,6 @@
       modalPembahasan.innerHTML = '<span class="empty-field">-</span>';
     }
 
-    // Keputusan
     modalKeputusan.innerHTML = '';
     const kLines = textToList(item.keputusan);
     if (kLines) {
@@ -955,7 +1012,6 @@
       modalKeputusan.innerHTML = '<span class="empty-field">-</span>';
     }
 
-    // Tindak Lanjut
     modalTindakLanjut.innerHTML = '';
     if (item.tindakLanjut && item.tindakLanjut.length > 0) {
       const ul = document.createElement('ul');
