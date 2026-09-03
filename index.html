@@ -166,33 +166,45 @@
       border-bottom: 1px solid #eef3f8;
       padding-bottom: 8px;
       margin-bottom: 6px;
+      align-items: center;
     }
 
-    .card .status {
-      background: #e9f0f9;
-      padding: 2px 12px;
+    /* ===== DROPDOWN STATUS (seperti badge) ===== */
+    .status-dropdown {
+      padding: 2px 8px;
       border-radius: 20px;
       font-size: 12px;
       font-weight: 600;
-      color: #1a3b5d;
+      border: none;
+      outline: none;
       cursor: pointer;
-      transition: background 0.2s, transform 0.1s;
-      user-select: none;
+      background: #e9f0f9;
+      color: #1a3b5d;
+      transition: background 0.2s;
+      font-family: inherit;
+      appearance: auto;
+      -webkit-appearance: auto;
+      min-width: 80px;
+      text-align: center;
     }
 
-    .card .status:hover:not(.status-selesai) {
-      background: #d4e0f0;
-      transform: scale(1.02);
+    .status-dropdown.status-berjalan {
+      background: #e9f0f9;
+      color: #1a3b5d;
     }
 
-    .card .status.status-selesai {
+    .status-dropdown.status-selesai {
       background: #c8e6c9;
       color: #2e7d32;
-      cursor: default;
     }
 
-    .card .status.status-selesai:hover {
-      transform: none;
+    .status-dropdown.status-batal {
+      background: #f8d7da;
+      color: #a71d2a;
+    }
+
+    .status-dropdown:hover {
+      filter: brightness(0.95);
     }
 
     .card .field {
@@ -572,6 +584,11 @@
       .notulen-grid {
         grid-template-columns: 1fr;
       }
+      .status-dropdown {
+        min-width: 70px;
+        font-size: 11px;
+        padding: 2px 6px;
+      }
     }
   </style>
 </head>
@@ -626,9 +643,9 @@
           <div class="form-group">
             <label for="f_status">Status</label>
             <select id="f_status">
-              <option value="Selesai">Selesai</option>
               <option value="Berjalan">Berjalan</option>
-              <option value="Direncanakan">Direncanakan</option>
+              <option value="Selesai">Selesai</option>
+              <option value="Batal">Batal</option>
             </select>
           </div>
           <div class="form-group">
@@ -814,7 +831,7 @@
   }
 
   // ============================================================
-  //  RENDER DASHBOARD (dengan fitur klik status)
+  //  RENDER DASHBOARD (dengan dropdown status)
   // ============================================================
   const grid = document.getElementById('notulenGrid');
   const searchInput = document.getElementById('search');
@@ -822,23 +839,15 @@
   const dateTo = document.getElementById('dateTo');
   const resetBtn = document.getElementById('resetBtn');
 
-  // Fungsi untuk mengubah status (hanya dari non-Selesai ke Selesai)
-  function updateStatusToSelesai(id) {
+  // Fungsi untuk mengubah status via dropdown
+  function handleStatusChange(id, newStatus) {
     let data = loadData();
     const item = data.find(d => d.id === id);
-    if (!item) return false;
-    if (item.status === 'Selesai') {
-      alert('Status sudah Selesai.');
-      return false;
-    }
-    // Konfirmasi opsional, bisa dihapus jika ingin langsung
-    if (!confirm(`Ubah status "${item.status}" menjadi "Selesai" untuk notulen "${item.judul}"?`)) {
-      return false;
-    }
-    item.status = 'Selesai';
+    if (!item) return;
+    item.status = newStatus;
     saveData(data);
-    filterNotulen(); // refresh tampilan
-    return true;
+    // Refresh tampilan agar dropdown di kartu lain ikut sync
+    filterNotulen();
   }
 
   function renderNotulen(data) {
@@ -900,30 +909,49 @@
         tlEl.appendChild(span);
       }
 
-      // === BADGE STATUS (bisa diklik) ===
-      const statusSpan = document.createElement('span');
-      statusSpan.className = 'status';
-      if (item.status === 'Selesai') {
-        statusSpan.classList.add('status-selesai');
-      }
-      statusSpan.textContent = item.status;
-      // Event klik pada badge
-      statusSpan.addEventListener('click', function(e) {
-        e.stopPropagation(); // agar tidak membuka modal detail
-        if (item.status === 'Selesai') {
-          alert('Notulen ini sudah berstatus Selesai.');
-          return;
+      // === DROPDOWN STATUS ===
+      const statusSelect = document.createElement('select');
+      statusSelect.className = 'status-dropdown';
+      // Tambahkan class warna sesuai status
+      const statusClass = item.status === 'Selesai' ? 'status-selesai' :
+                          item.status === 'Batal' ? 'status-batal' : 'status-berjalan';
+      statusSelect.classList.add(statusClass);
+
+      const statusOptions = ['Berjalan', 'Selesai', 'Batal'];
+      statusOptions.forEach(opt => {
+        const option = document.createElement('option');
+        option.value = opt;
+        option.textContent = opt;
+        if (opt === item.status) {
+          option.selected = true;
         }
-        updateStatusToSelesai(item.id);
+        statusSelect.appendChild(option);
       });
 
-      // === META (tanggal + status) ===
+      // Event change dropdown
+      statusSelect.addEventListener('change', function(e) {
+        e.stopPropagation();
+        const newStatus = this.value;
+        handleStatusChange(item.id, newStatus);
+        // Update class warna setelah perubahan
+        this.className = 'status-dropdown';
+        const newClass = newStatus === 'Selesai' ? 'status-selesai' :
+                         newStatus === 'Batal' ? 'status-batal' : 'status-berjalan';
+        this.classList.add(newClass);
+      });
+
+      // Mencegah klik pada dropdown membuka modal
+      statusSelect.addEventListener('click', function(e) {
+        e.stopPropagation();
+      });
+
+      // === META (tanggal + status dropdown) ===
       const metaDiv = document.createElement('div');
       metaDiv.className = 'meta';
       const dateSpan = document.createElement('span');
       dateSpan.textContent = item.tanggal;
       metaDiv.appendChild(dateSpan);
-      metaDiv.appendChild(statusSpan);
+      metaDiv.appendChild(statusSelect);
 
       // === TITLE ===
       const titleDiv = document.createElement('div');
@@ -937,10 +965,9 @@
       card.appendChild(keputusanEl);
       card.appendChild(tlEl);
 
-      // Klik pada kartu (selain badge) untuk membuka modal
+      // Klik pada kartu (selain dropdown) untuk membuka modal
       card.addEventListener('click', (e) => {
-        // Jika yang diklik adalah badge, sudah di-handle di atas
-        if (e.target.classList.contains('status')) return;
+        if (e.target.tagName === 'SELECT') return;
         openDetail(item.id);
       });
 
@@ -978,7 +1005,7 @@
   });
 
   // ============================================================
-  //  MODAL DETAIL (sama)
+  //  MODAL DETAIL
   // ============================================================
   const modal = document.getElementById('modalDetail');
   const modalTitle = document.getElementById('modalTitle');
@@ -1041,7 +1068,7 @@
   });
 
   // ============================================================
-  //  ADMIN PANEL (tidak berubah)
+  //  ADMIN PANEL
   // ============================================================
   let editingId = null;
 
