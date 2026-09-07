@@ -449,6 +449,16 @@
     margin-top:6px;
   }
   .riwayat-toggle:hover{text-decoration:underline;}
+  .dash-card-actions{
+    display:flex;
+    align-items:center;
+    gap:16px;
+    margin-top:6px;
+  }
+  .dash-card-actions .btn{
+    padding:7px 14px;
+    font-size:13px;
+  }
   select.status-select-pill{
     width:auto;
     max-width:fit-content;
@@ -507,6 +517,7 @@ let filterStatus = 'semua';
 let rapatData = {}; // id -> object
 let riwayatCache = {}; // id -> array riwayat
 let expandedRiwayat = {}; // id -> true/false (khusus dashboard)
+let editingFields = {}; // id -> true/false, mode edit inline kartu dashboard
 let selectedId = null;
 let isEditingNew = false;
 let pollTimer = null;
@@ -734,20 +745,24 @@ function renderDashboard(main){
     ? '<div class="empty-list">Belum ada rapat pada kategori ini.</div>'
     : items.map(r => {
         const expanded = !!expandedRiwayat[r.id];
-        return `
-        <div class="dash-card">
-          <div class="dash-card-head">
+        const editing = !!editingFields[r.id];
+
+        const fieldsHtml = editing ? `
+          <div class="dash-fields">
             <div>
-              <h3 class="dash-card-title">${escapeHtml(r.judul || '(tanpa judul)')}</h3>
-              <div class="dash-card-date">${fmtDate(r.tanggal)}</div>
+              <div class="dash-field-label">HASIL PEMBAHASAN</div>
+              <textarea id="ef_pembahasan_${r.id}">${escapeHtml(r.pembahasan || '')}</textarea>
             </div>
-            <select class="status-select-pill status-${r.status}" onchange="handleStatusChange('${r.id}', this.value)">
-              <option value="berjalan" ${r.status==='berjalan'?'selected':''}>Berjalan</option>
-              <option value="tunda" ${r.status==='tunda'?'selected':''}>Tunda</option>
-              <option value="selesai" ${r.status==='selesai'?'selected':''}>Selesai</option>
-              <option value="batal" ${r.status==='batal'?'selected':''}>Batal</option>
-            </select>
+            <div>
+              <div class="dash-field-label">RENCANA TINDAK LANJUT</div>
+              <textarea id="ef_tindak_${r.id}">${escapeHtml(r.tindakLanjut || '')}</textarea>
+            </div>
+            <div>
+              <div class="dash-field-label">HASIL TINDAK LANJUT</div>
+              <textarea id="ef_hasil_${r.id}">${escapeHtml(r.hasilTindakLanjut || '')}</textarea>
+            </div>
           </div>
+        ` : `
           <div class="dash-fields">
             <div>
               <div class="dash-field-label">HASIL PEMBAHASAN</div>
@@ -762,7 +777,36 @@ function renderDashboard(main){
               <div class="dash-field-value ${r.hasilTindakLanjut ? '' : 'placeholder'}">${escapeHtml(r.hasilTindakLanjut || 'Belum diisi.')}</div>
             </div>
           </div>
-          <button class="riwayat-toggle" onclick="toggleRiwayat('${r.id}')">${expanded ? 'Sembunyikan riwayat' : 'Lihat riwayat perubahan'}</button>
+        `;
+
+        const actionsHtml = editing ? `
+          <div class="dash-card-actions">
+            <button class="btn btn-primary" onclick="handleSaveFields('${r.id}', event)">Simpan</button>
+            <button class="btn" onclick="toggleEditCard('${r.id}')">Batal</button>
+          </div>
+        ` : `
+          <div class="dash-card-actions">
+            <button class="riwayat-toggle" onclick="toggleEditCard('${r.id}')">Edit</button>
+            <button class="riwayat-toggle" onclick="toggleRiwayat('${r.id}')">${expanded ? 'Sembunyikan riwayat' : 'Lihat riwayat perubahan'}</button>
+          </div>
+        `;
+
+        return `
+        <div class="dash-card">
+          <div class="dash-card-head">
+            <div>
+              <h3 class="dash-card-title">${escapeHtml(r.judul || '(tanpa judul)')}</h3>
+              <div class="dash-card-date">${fmtDate(r.tanggal)}</div>
+            </div>
+            <select class="status-select-pill status-${r.status}" onchange="handleStatusChange('${r.id}', this.value)">
+              <option value="berjalan" ${r.status==='berjalan'?'selected':''}>Berjalan</option>
+              <option value="tunda" ${r.status==='tunda'?'selected':''}>Tunda</option>
+              <option value="selesai" ${r.status==='selesai'?'selected':''}>Selesai</option>
+              <option value="batal" ${r.status==='batal'?'selected':''}>Batal</option>
+            </select>
+          </div>
+          ${fieldsHtml}
+          ${actionsHtml}
           ${expanded ? renderRiwayatHtml(r.id) : ''}
         </div>`;
       }).join('');
@@ -786,6 +830,41 @@ function renderDashboard(main){
 
     <div class="dash-grid">${cardsHtml}</div>
   `;
+}
+
+function toggleEditCard(id){
+  editingFields[id] = !editingFields[id];
+  renderMain();
+}
+
+async function handleSaveFields(id, evt){
+  const current = rapatData[id];
+  if(!current) return;
+  const item = {
+    id: current.id,
+    tanggal: current.tanggal,
+    judul: current.judul,
+    pembahasan: document.getElementById('ef_pembahasan_' + id).value,
+    tindakLanjut: document.getElementById('ef_tindak_' + id).value,
+    hasilTindakLanjut: document.getElementById('ef_hasil_' + id).value,
+    status: current.status
+  };
+  const btn = evt.target;
+  btn.disabled = true;
+  btn.textContent = 'Menyimpan...';
+  try{
+    await saveRapat(item);
+    editingFields[id] = false;
+    if(expandedRiwayat[id]){
+      await loadRiwayat(id);
+    }
+    renderMain();
+  }catch(e){
+    showToast('Gagal menyimpan, coba lagi');
+    console.error(e);
+    btn.disabled = false;
+    btn.textContent = 'Simpan';
+  }
 }
 
 async function handleStatusChange(id, newStatus){
