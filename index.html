@@ -449,6 +449,7 @@
     margin-top:6px;
   }
   .riwayat-toggle:hover{text-decoration:underline;}
+  .riwayat-toggle-danger{color:var(--bad);}
   .dash-card-actions{
     display:flex;
     align-items:center;
@@ -788,6 +789,7 @@ function renderDashboard(main){
           <div class="dash-card-actions">
             <button class="riwayat-toggle" onclick="toggleEditCard('${r.id}')">Edit</button>
             <button class="riwayat-toggle" onclick="toggleRiwayat('${r.id}')">${expanded ? 'Sembunyikan riwayat' : 'Lihat riwayat perubahan'}</button>
+            <button class="riwayat-toggle riwayat-toggle-danger" onclick="handleDelete('${r.id}')">Hapus</button>
           </div>
         `;
 
